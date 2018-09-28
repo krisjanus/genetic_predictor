@@ -61,4 +61,13 @@ def make_pairs(part):
         part_pairs[col] = new_list
     return part_pairs
         
+def get_cubes(paired_part, parent_lists=[[]], index=0):
+    if index == len(paired_part):
+        return parent_lists
+    else:
+        child_list = paired_part.iloc[index]
+        child_name = paired_part.index[index]
+        return cube_builder(paired_part,[p + [{child_name: c}] for p in parent_lists 
+                                         for c in child_list],index+1)
+    
     

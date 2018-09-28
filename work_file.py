@@ -21,8 +21,7 @@ X_train, X_test, y_train, y_test = train_test_split(df.drop(['Survived'],axis=1)
                                                     df['Survived'], 
                                                     test_size=.2)
 #%%
-splits = []
-for col in ['Pclass','Age','Gender']:
-    splits.append(gen_ran(X_train[col]))
-    
-#%%
+part = gen_part(X_train)
+make_pairs(part)
+
+cubes = get_cubes(make_pairs(part)) 
