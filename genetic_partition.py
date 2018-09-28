@@ -67,7 +67,7 @@ def get_cubes(paired_part, parent_lists=[[]], index=0):
     else:
         child_list = paired_part.iloc[index]
         child_name = paired_part.index[index]
-        return cube_builder(paired_part,[p + [{child_name: c}] for p in parent_lists 
+        return get_cubes(paired_part,[p + [{child_name: c}] for p in parent_lists 
                                          for c in child_list],index+1)
     
     
