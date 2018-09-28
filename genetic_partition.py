@@ -63,11 +63,12 @@ def make_pairs(part):
         
 def get_cubes(paired_part, parent_lists=[[]], index=0):
     if index == len(paired_part):
-        return parent_lists
+        return pd.DataFrame([pd.concat(p) for p in parent_lists])
     else:
         child_list = paired_part.iloc[index]
         child_name = paired_part.index[index]
-        return cube_builder(paired_part,[p + [{child_name: c}] for p in parent_lists 
-                                         for c in child_list],index+1)
+        child_list_labeled = [pd.Series({child_name: c}) for c in child_list]
+        return get_cubes(paired_part,[p+[c] for p in parent_lists 
+                                         for c in child_list_labeled],index+1)
     
     
