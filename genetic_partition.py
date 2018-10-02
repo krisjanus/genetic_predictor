@@ -22,6 +22,26 @@ def gini_impurity(labels):
     gi = 1 - label_count.map(lambda x: (x/len(labels))**2).sum()
     return gi
 
+def cube_extractor(cubes, paired_part, index):
+    cube = pd.DataFrame(cubes.loc[index,:])
+    cube.rename(index=str, columns = {index:'bounds'}, inplace=True)
+    for col in cube.index:
+        cube.loc[col,'is_upper_bound'] = (cube.loc[col, 'bounds'] == 
+                                    paired_part[col][len(paired_part[col])-1])
+    return cube
+
+def labels_in_cube(cube, features, labels):
+    df = pd.DataFrame(index = features.index)
+    for col in cube.index:
+        ubt = (cube.loc[col,'is_upper_bound'] & 
+                (features[col] == cube.loc[col,'bounds'][1]))
+        df[col] = ((features[col] >= cube.loc[col,'bounds'][0]) & 
+                    ((features[col] < cube.loc[col,'bounds'][1]) | ubt))
+
+    df['in_cube'] = (df.sum(axis=1) == len(df.columns))
+    return list(df.loc[df.in_cube,:].index)
+        
+
 def info_gain(left_labels, right_labels):
     base_impurity = gini_impurity(pd.concat([left_labels,right_labels],ignore_index=True))
     ttl_labels = len(left_labels) + len(right_labels)
@@ -70,5 +90,4 @@ def get_cubes(paired_part, parent_lists=[[]], index=0):
         child_list_labeled = [pd.Series({child_name: c}) for c in child_list]
         return get_cubes(paired_part,[p+[c] for p in parent_lists 
                                          for c in child_list_labeled],index+1)
-    
-    
+       
