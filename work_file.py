@@ -30,6 +30,7 @@ cubes = get_cubes(make_pairs(part))
 test_cube = cube_extractor(cubes, paired_part, 1001)
 
 df_lic = {}
-for i in tqdm(cubes.index):
-    test_cube = cube_extractor(cubes, paired_part, i)
-    df_lic[i] = labels_in_cube(test_cube, X_train, y_train)
+for row in tqdm(cubes.index):
+    df_lic[row]=labels_in_cube(cubes.loc[row,:],X_train)
+    
+gini_impurity(y_train[df_lic[0]])

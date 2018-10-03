@@ -30,18 +30,17 @@ def cube_extractor(cubes, paired_part, index):
                                     paired_part[col][len(paired_part[col])-1])
     return cube
 
-def labels_in_cube(cube, features, labels):
+def labels_in_cube(cube, features):
     df = pd.DataFrame(index = features.index)
     for col in cube.index:
-        ubt = (cube.loc[col,'is_upper_bound'] & 
-                (features[col] == cube.loc[col,'bounds'][1]))
-        df[col] = ((features[col] >= cube.loc[col,'bounds'][0]) & 
-                    ((features[col] < cube.loc[col,'bounds'][1]) | ubt))
+        ubt = ((len(cube[col])==3) & 
+                (features[col] == cube[col][1]))
+        df[col] = ((features[col] >= cube[col][0]) & 
+                    ((features[col] < cube[col][1]) | ubt))
 
     df['in_cube'] = (df.sum(axis=1) == len(df.columns))
     return list(df.loc[df.in_cube,:].index)
-        
-
+    
 def info_gain(left_labels, right_labels):
     base_impurity = gini_impurity(pd.concat([left_labels,right_labels],ignore_index=True))
     ttl_labels = len(left_labels) + len(right_labels)
@@ -77,7 +76,10 @@ def make_pairs(part):
     for col in part.index:
         new_list = []
         for i in range(len(part[col])-1):
-            new_list.append(part[col][i:i+2])
+            if i != (len(part[col])-2):
+                new_list.append(part[col][i:i+2])
+            else:
+                new_list.append(part[col][i:i+2]+[1])
         part_pairs[col] = new_list
     return part_pairs
         
