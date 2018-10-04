@@ -27,10 +27,9 @@ paired_part = make_pairs(part)
 
 cubes = get_cubes(make_pairs(part)) 
 
-test_cube = cube_extractor(cubes, paired_part, 1001)
+df_vic = vectors_in_cubes_dict(cubes, X_train)
+info_gain(df_vic, y_train)
 
-df_lic = {}
-for row in tqdm(cubes.index):
-    df_lic[row]=labels_in_cube(cubes.loc[row,:],X_train)
-    
-gini_impurity(y_train[df_lic[0]])
+ttl_labels = len(y_train)
+sum([len(y_train[df_vic[i]])*gini_impurity(y_train[df_vic[i]]) 
+                            for i in range(len(df_vic))])/ttl_labels

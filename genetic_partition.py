@@ -14,6 +14,7 @@ labels in a cube?
 import pandas as pd
 import numpy as np
 import random
+from tqdm import tqdm
 
 #%% Evaluation
 
@@ -30,7 +31,7 @@ def cube_extractor(cubes, paired_part, index):
                                     paired_part[col][len(paired_part[col])-1])
     return cube
 
-def labels_in_cube(cube, features):
+def vectors_in_cube(cube, features):
     df = pd.DataFrame(index = features.index)
     for col in cube.index:
         ubt = ((len(cube[col])==3) & 
@@ -40,12 +41,18 @@ def labels_in_cube(cube, features):
 
     df['in_cube'] = (df.sum(axis=1) == len(df.columns))
     return list(df.loc[df.in_cube,:].index)
+
+def vectors_in_cubes_dict(cubes, features):
+    df_vic = {}
+    for row in tqdm(cubes.index):
+        df_vic[row]=vectors_in_cube(cubes.loc[row,:],features)
+    return df_vic   
     
-def info_gain(left_labels, right_labels):
-    base_impurity = gini_impurity(pd.concat([left_labels,right_labels],ignore_index=True))
-    ttl_labels = len(left_labels) + len(right_labels)
-    split_impurity = (gini_impurity(left_labels)*len(left_labels) + 
-                        gini_impurity(right_labels)*len(right_labels))/ttl_labels
+def info_gain(df_vic, labels):
+    base_impurity = gini_impurity(labels)
+    ttl_labels = len(labels)
+    split_impurity = sum([len(labels[df_vic[i]])*gini_impurity(labels[df_vic[i]]) 
+                            for i in range(len(df_vic))])/ttl_labels
     return base_impurity - split_impurity
     
 #%%
