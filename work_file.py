@@ -13,6 +13,8 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
+import genetic_partition as gen_part
+import genetic_mutator as gen_mut
 #%%
 df = pd.read_csv('data/titanic_prepd.csv')
 df = df.set_index('PassengerId')
@@ -22,12 +24,14 @@ X_train, X_test, y_train, y_test = train_test_split(df.drop(['Survived'],axis=1)
                                                     df['Survived'], 
                                                     test_size=.2)
 #%%
-part = gen_part(X_train)
-paired_part = make_pairs(part)
 
-cubes = get_cubes(make_pairs(part)) 
+#%%
+parts = gen_part.gen_pop(X_train, 100)
+paired_part = part_eval.make_pairs(part)
 
-df_vic = vectors_in_cubes_dict(cubes, X_train)
+cubes = part_eval.get_cubes(part_eval.make_pairs(part)) 
+
+df_vic = part_eval.vectors_in_cubes_dict(cubes, X_train)
 info_gain(df_vic, y_train)
 
 ttl_labels = len(y_train)

@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Oct  9 06:26:17 2018
+
+@author: krisjan
+"""
+import pandas as pd
+from tqdm import tqdm
+
+def gini_impurity(labels):
+    label_count = labels.value_counts()
+    gi = 1 - label_count.map(lambda x: (x/len(labels))**2).sum()
+    return gi
+
+def cube_extractor(cubes, paired_part, index):
+    cube = pd.DataFrame(cubes.loc[index,:])
+    cube.rename(index=str, columns = {index:'bounds'}, inplace=True)
+    for col in cube.index:
+        cube.loc[col,'is_upper_bound'] = (cube.loc[col, 'bounds'] == 
+                                    paired_part[col][len(paired_part[col])-1])
+    return cube
+
+def vectors_in_cube(cube, features):
+    df = pd.DataFrame(index = features.index)
+    for col in cube.index:
+        ubt = ((len(cube[col])==3) & 
+                (features[col] == cube[col][1]))
+        df[col] = ((features[col] >= cube[col][0]) & 
+                    ((features[col] < cube[col][1]) | ubt))
+
+    df['in_cube'] = (df.sum(axis=1) == len(df.columns))
+    return list(df.loc[df.in_cube,:].index)
+
+def vectors_in_cubes_dict(cubes, features):
+#    df_vic = {}
+#    for row in tqdm(cubes.index):
+#        df_vic[row]=vectors_in_cube(cubes.loc[row,:],features)
+    df_vic = [vectors_in_cube(cubes.loc[row,:],features) for row in cubes.index]
+    return df_vic   
+    
+def info_gain(df_vic, labels):
+    base_impurity = gini_impurity(labels)
+    ttl_labels = len(labels)
+    split_impurity = sum([len(labels[df_vic[i]])*gini_impurity(labels[df_vic[i]]) 
+                            for i in range(len(df_vic))])/ttl_labels
+    return base_impurity - split_impurity
+
+def make_pairs(part):
+    part_pairs = pd.Series()
+    for col in part.index:
+        new_list = []
+        for i in range(len(part[col])-1):
+            if i != (len(part[col])-2):
+                new_list.append(part[col][i:i+2])
+            else:
+                new_list.append(part[col][i:i+2]+[1])
+        part_pairs[col] = new_list
+    return part_pairs
+        
+def get_cubes(paired_part, parent_lists=[[]], index=0):
+    if index == len(paired_part):
+        return pd.DataFrame([pd.concat(p) for p in parent_lists])
+    else:
+        child_list = paired_part.iloc[index]
+        child_name = paired_part.index[index]
+        child_list_labeled = [pd.Series({child_name: c}) for c in child_list]
+        return get_cubes(paired_part,[p+[c] for p in parent_lists 
+                                         for c in child_list_labeled],index+1)
+
+def get_gain_scores(pop, X_train, y_train):
+    df_scores = pd.Series(index = pop.index)
+    for individual in tqdm(pop.index):
+        cubes = get_cubes(make_pairs(pop[individual])) 
+        df_vic = vectors_in_cubes_dict(cubes, X_train)
+        df_scores[individual] = info_gain(df_vic, y_train)
+    return df_scores
