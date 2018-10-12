@@ -6,7 +6,8 @@ Created on Tue Oct  9 06:26:17 2018
 @author: krisjan
 """
 import pandas as pd
-from tqdm import tqdm
+import numpy as np
+import pbar
 
 def gini_impurity(labels):
     label_count = labels.value_counts()
@@ -32,18 +33,48 @@ def vectors_in_cube(cube, features):
     df['in_cube'] = (df.sum(axis=1) == len(df.columns))
     return list(df.loc[df.in_cube,:].index)
 
+def vector_in_cube(cube, row):
+    for col in cube.index:
+        ubt = ((len(cube[col])==3) & 
+                (row[col] == cube[col][1]))
+        vic = ((row[col] >= cube[col][0]) & 
+                    ((row[col] < cube[col][1]) | ubt))
+        if not vic:
+            break
+
+    return vic
+
 def vectors_in_cubes_dict(cubes, features):
 #    df_vic = {}
 #    for row in tqdm(cubes.index):
 #        df_vic[row]=vectors_in_cube(cubes.loc[row,:],features)
     df_vic = [vectors_in_cube(cubes.loc[row,:],features) for row in cubes.index]
     return df_vic   
+
+def vector_in_cube_dict(cubes, features):
+    df_vic = {}
+    feature_len = len(features)
+    i=1
+    for row in features.index:
+        vic = False
+        for cube_row in cubes.index:
+            vic=vector_in_cube(cubes.loc[cube_row,:],features.loc[row,:])
+            if vic:
+                df_vic[row] = cube_row
+                break
+        pbar.updt(feature_len,i)
+        i=i+1
+    df_vic = pd.Series(df_vic)
+    df_vic = pd.DataFrame(df_vic, columns=['cube'])
+    df_vic['row'] = df_vic.index
+    df_vic = df_vic.groupby('cube')['row'].apply(list)
+    return df_vic  
     
 def info_gain(df_vic, labels):
     base_impurity = gini_impurity(labels)
     ttl_labels = len(labels)
     split_impurity = sum([len(labels[df_vic[i]])*gini_impurity(labels[df_vic[i]]) 
-                            for i in range(len(df_vic))])/ttl_labels
+                            for i in df_vic.index])/ttl_labels
     return base_impurity - split_impurity
 
 def make_pairs(part):
@@ -70,8 +101,28 @@ def get_cubes(paired_part, parent_lists=[[]], index=0):
 
 def get_gain_scores(pop, X_train, y_train):
     df_scores = pd.Series(index = pop.index)
-    for individual in tqdm(pop.index):
-        cubes = get_cubes(make_pairs(pop[individual])) 
-        df_vic = vectors_in_cubes_dict(cubes, X_train)
+    for individual in pop.index:
+        print('Evaluating',individual)
+        df_vic = get_containers(X_train, pop[individual])
         df_scores[individual] = info_gain(df_vic, y_train)
     return df_scores
+
+def get_container(row, cubes):
+    distances = {}
+    for i in cubes.columns:
+        distances[i] = np.linalg.norm(cubes[i].values-row.values,ord=1)
+    return min(distances, key=distances.get)
+
+def get_containers(df, cubes):
+    df_row_cube = {}
+    feature_len = len(df)
+    i=1
+    for row in df.index:
+        df_row_cube[row] = get_container(df.loc[row,:], cubes)
+        pbar.updt(feature_len,i)
+        i=i+1
+    df_row_cube = pd.Series(df_row_cube)
+    df_row_cube = pd.DataFrame(df_row_cube, columns=['cube'])
+    df_row_cube['row'] = df_row_cube.index
+    df_rows_in_cube = df_row_cube.groupby('cube')['row'].apply(list)
+    return df_rows_in_cube
