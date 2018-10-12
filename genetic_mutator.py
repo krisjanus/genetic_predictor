@@ -19,6 +19,18 @@ def gen_split(column, lower, upper, probability=1, cur_split=np.nan):
         return split_p
     else:
         return cur_split
+
+def mutate(surv_series, bounds, probability = 1):
+    for ind in surv_series.index:
+        for col in surv_series[ind]:
+            centre = surv_series[ind].loc[:,col]
+            new_centre = {}
+            for index in centre:
+                lower = bounds.loc[index,'lower']
+                upper = bounds.loc[index,'upper']
+                new_centre[index] = gen_split(centre[index], lower, upper, 
+                          probability, centre[index])
     
+        
 def breed_pair():
     return
