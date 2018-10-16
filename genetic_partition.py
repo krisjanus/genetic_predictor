@@ -44,7 +44,8 @@ def gen_centre(df, bounds, probability=1, cur_split=np.nan):
     for col in df.columns:
         lower = bounds.loc[col,'lower'].values
         upper = bounds.loc[col,'upper'].values
-        split_p = gen_mut.gen_split(df[col], lower, upper, probability, cur_split)
+        col_dtype = df[col].dtypes
+        split_p = gen_mut.gen_split(col_dtype, lower, upper, probability, cur_split)
         part[col] = split_p
     return part
 
