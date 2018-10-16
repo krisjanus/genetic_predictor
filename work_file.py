@@ -31,3 +31,4 @@ pop = gen_part.gen_pop(X_train, 100)
 # evaluate each individual and return an information gain score
 df_scores = part_eval.get_gain_scores(pop, X_train, y_train)
 #%% testing mutation functionality
+surv_mut = gen_mut.mutate(survivors, X_train.dtypes, bounds, centre_probability = .01,probability=.01)
