@@ -9,6 +9,7 @@ Created on Mon Oct  8 06:08:52 2018
 import pandas as pd
 import numpy as np
 import random
+from math import floor
 #%%
 def gen_split(column_dtype, lower, upper, probability=1, cur_split=np.nan):
     if probability >= random.random():
@@ -47,5 +48,19 @@ def mutate(surv_series, df_dtypes, bounds, centre_probability = .2, probability 
             
     
         
-def breed_pair():
+def breed(surv_series, breed_percentage = .2, gene_swap_prob = .5):
+    breed_series = pd.Series()
+    list_of_pairs = [(surv_series.index[p1], surv_series.index[p2]) 
+                                            for p1 in range(len(surv_series)) 
+                                            for p2 in range(p1+1,len(surv_series))]
+    nr_to_breed = floor(breed_percentage * len(list_of_pairs))
+    breed_pairs = random.sample(list_of_pairs, nr_to_breed)
+    for index_1, index_2 in breed_pairs:
+        new_ind = surv_series[index_1]
+        for col in new_ind:
+            if gene_swap_prob >= random.random():
+                new_ind.loc[:,col] = surv_series[index_2].loc[:,col]
+        name = index_1 + '_' + index_2
+        breed_series[name] = new_ind
+    return breed_series
     return
