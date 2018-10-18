@@ -32,3 +32,4 @@ pop = gen_part.gen_pop(X_train, 100)
 df_scores = part_eval.get_gain_scores(pop, X_train, y_train)
 #%% testing mutation functionality
 surv_mut = gen_mut.mutate(survivors, X_train.dtypes, bounds, centre_probability = .01,probability=.01)
+surv_breed = gen_mut.breed(survivors, df_scores[:5],35)
