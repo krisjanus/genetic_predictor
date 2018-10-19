@@ -21,32 +21,35 @@ def gen_split(column_dtype, lower, upper, probability=1, cur_split=np.nan):
     else:
         return cur_split
 
-#TODO do not select a centre, select a column/axis and mutate along the axis
-# possibly with varying probabilities
-def mutate(surv_series, df_dtypes, bounds, centre_probability = .01, probability = .01):
+def mutate(surv_series, df_dtypes, bounds, probability = .01, strength = .2, keep_originals=False):
     mut_series = pd.Series()
+    df_report = pd.DataFrame()
     for ind in surv_series.index:
-        new_part = pd.DataFrame(index = surv_series[ind].index)
+        mutant = pd.DataFrame(index = surv_series[ind].index, columns = surv_series[ind].columns)
         not_same_sum = 0
-        for col in surv_series[ind]:
-            centre = surv_series[ind].loc[:,col]
-            if centre_probability >= random.random():
-                new_centre = {}
-                for index in centre.index:
-                    lower = bounds.loc[index,'lower']
-                    upper = bounds.loc[index,'upper']
-                    col_dtype = df_dtypes[index]
-                    new_centre[index] = gen_split(col_dtype, lower, upper, 
-                              probability, centre[index])
-                new_centre = pd.Series(new_centre)
+        for col in surv_series[ind].index:
+            if probability >= random.random():
+                axis = surv_series[ind].loc[col,:]
+                new_col = {}
+                for ind_2 in axis.index:
+                    lower = bounds.loc[col,'lower']
+                    upper = bounds.loc[col,'upper']
+                    col_dtype = df_dtypes[col]
+                    new_col[ind_2] = gen_split(col_dtype, lower, upper, 
+                              strength, axis[ind_2])
+                new_col = pd.Series(new_col)
             else:
-                new_centre = centre
-            new_part.loc[:,col] = new_centre
-            not_same_sum = not_same_sum + int(sum(new_part.loc[:,col] != centre) > 0)
-        if not_same_sum > 0:
+                new_col = surv_series[ind].loc[col,:]
+            mutant.loc[col,:] = new_col
+            not_same_sum = not_same_sum + int(sum(mutant.loc[col,:] != surv_series[ind].loc[col,:]))
+            df_report.loc[ind,col] = not_same_sum
+        if keep_originals and (not_same_sum > 0):
             new_ind = ind + '_mut'
-            mut_series[new_ind] = new_part
-    return mut_series
+            mut_series[new_ind] = mutant
+        elif not keep_originals:
+            new_ind = ind
+            mut_series[new_ind] = mutant
+    return mut_series, df_report
             
               
 def breed(surv_series, df_scores, nr_children_limit):
