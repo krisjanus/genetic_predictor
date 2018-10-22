@@ -9,6 +9,7 @@ Created on Mon Oct  8 06:08:52 2018
 import pandas as pd
 import numpy as np
 import random
+import pbar
 from math import floor, ceil
 #%%
 def gen_part(df, bounds):
@@ -16,7 +17,7 @@ def gen_part(df, bounds):
     for col in df.columns:
         lower = bounds.loc[col,'lower'].values
         upper = bounds.loc[col,'upper'].values
-        split_p = gen_mut.gen_split(df[col], lower, upper)
+        split_p = gen_split(df[col], lower, upper)
         part[col] = list(set([lower, split_p, upper]))
         part[col].sort()
     return part
@@ -24,15 +25,16 @@ def gen_part(df, bounds):
 def gen_centre(df, bounds, probability=1, cur_split=np.nan):
     part = pd.Series()
     for col in df.columns:
-        lower = bounds.loc[col,'lower'].values
-        upper = bounds.loc[col,'upper'].values
+        lower = bounds.loc[col,'lower']
+        upper = bounds.loc[col,'upper']
         col_dtype = df[col].dtypes
-        split_p = gen_mut.gen_split(col_dtype, lower, upper, probability, cur_split)
+        split_p = gen_split(col_dtype, lower, upper, probability, cur_split)
         part[col] = split_p
     return part
 
 def gen_pop(df, bounds, pop_size):
     pop = pd.Series()
+    print('generating individuals')
     for i in range(pop_size):
         name = 'ind_' + str(i)
         pop[name] = gen_cube_centres(df, bounds)
@@ -83,7 +85,7 @@ def mutate(surv_series, df_dtypes, bounds, probability = .01, strength = .2, kee
             not_same_sum = not_same_sum + int(sum(mutant.loc[col,:] != surv_series[ind].loc[col,:]))
             if not_same_sum > 0:
                 df_report.loc[ind,'variable'] = col
-                df_report.loc[(df_report.loc[ind,'variable'] == col),'change_count'] = not_same_sum
+                df_report.loc[(df_report['variable'] == col)&(df_report.index==ind),'change_count'] = not_same_sum
         if keep_originals and (not_same_sum > 0):
             new_ind = ind + '_mut'
             mut_series[new_ind] = mutant
@@ -126,7 +128,7 @@ def new_gen(population, df_train, df_scores, survival_rate, alien_rate, pop_size
     nr_aliens = floor(alien_rate * pop_size)
     surv_breed = breed(survivors, df_scores[:nr_surv],pop_size-nr_surv-nr_aliens)
     surv_mut, df_report = mutate(surv_breed, df_train.dtypes, bounds, probability=prob_mutate,
-                          strength = mutate_strength, keep_originals)
+                          strength = mutate_strength, keep_originals=keep_originals)
     aliens = gen_pop(df_train, bounds, nr_aliens)
     df_new_gen = pd.concat([survivors, surv_mut, aliens])
     print(df_report)
