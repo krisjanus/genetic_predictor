@@ -34,5 +34,8 @@ df_scores = part_eval.get_gain_scores(pop, X_train, y_train)
 
 surv_breed = gen_mut.breed(survivors, df_scores[:5],35)
 
-surv_mut, df_breed_report = gen_mut.mutate(surv_breed, X_train.dtypes, bounds, probability=.01,
+surv_mut, df_breed_report = gen_mut.mutate(surv_breed, X_train.dtypes, bounds, probability=.05,
                           strength = .2, keep_originals=False)
+#%% test the training module
+best_part = gen_part.train(X_train, y_train, 50, 3, prob_mutate = .05, 
+                           mutate_strength = .3, survival_rate = .1, alien_rate = .1)

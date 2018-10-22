@@ -29,50 +29,18 @@ def bounds_df(df):
         bounds.loc[col,'lower'],bounds.loc[col,'upper'] = get_bounds(df[col])
     return bounds
 
-def gen_part(df, bounds):
-    part = pd.Series()
-    for col in df.columns:
-        lower = bounds.loc[col,'lower'].values
-        upper = bounds.loc[col,'upper'].values
-        split_p = gen_mut.gen_split(df[col], lower, upper)
-        part[col] = list(set([lower, split_p, upper]))
-        part[col].sort()
-    return part
 
-def gen_centre(df, bounds, probability=1, cur_split=np.nan):
-    part = pd.Series()
-    for col in df.columns:
-        lower = bounds.loc[col,'lower'].values
-        upper = bounds.loc[col,'upper'].values
-        col_dtype = df[col].dtypes
-        split_p = gen_mut.gen_split(col_dtype, lower, upper, probability, cur_split)
-        part[col] = split_p
-    return part
 
-def gen_pop(df, bounds, pop_size):
-    pop = pd.Series()
-    for i in range(pop_size):
-        name = 'ind_' + str(i)
-        pop[name] = gen_cube_centres(df, bounds)
-        pbar.updt(pop_size,i+1)
-    return pop
-
-def gen_cube_centres(df, bounds, cubes=0):
-    if cubes == 0:
-        cubes = len(df)
-    centres = pd.DataFrame(index=df.columns)
-    for i in range(cubes):
-        name = 'cube_' + str(i)
-        centres[name] = gen_centre(df, bounds)
-        
-    return centres
-
-def train(X_train, y_train, pop_size, gen_size, prob_mutate = .2, prob_cross = .6, survival_rate = .1):
+def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05, 
+          mutate_strength = .3, survival_rate = .1, alien_rate = .1):
     bounds = bounds_df(X_train)
-    pop = gen_pop(X_train, bounds, pop_size)
+    pop = gen_mut.gen_pop(X_train, bounds, pop_size)
     df_scores = part_eval.get_gain_scores(pop, X_train, y_train)
-    df_scores.sort_values(ascending = False,inplace=True)
-    nr_surv = math.ceil(survival_rate*len(df_scores))
-    survivors = pop[list(df_scores[:nr_surv].index)]
-    mutants = gen_mut.mutate(survivors, bounds, prob_mutate)
+    for i in range(gen_size):
+        pop = gen_mut.new_gen(pop, X_train, df_scores, survival_rate, alien_rate, 
+                      pop_size, prob_mutate, mutate_strength, bounds, keep_originals=False)
+        df_scores = part_eval.get_gain_scores(pop, X_train, y_train)
+        print('best:', df_scores.sort_values(ascending = False)[:1])
+    return pop[list(df_scores.sort_values(ascending = False)[:1])]
+
        
