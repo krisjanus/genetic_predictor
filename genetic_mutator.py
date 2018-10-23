@@ -32,11 +32,11 @@ def gen_centre(df, bounds, probability=1, cur_split=np.nan):
         part[col] = split_p
     return part
 
-def gen_pop(df, bounds, pop_size):
+def gen_pop(df, bounds, pop_size, prefix='ind_'):
     pop = pd.Series()
     print('generating individuals')
     for i in range(pop_size):
-        name = 'ind_' + str(i)
+        name = prefix + str(i)
         pop[name] = gen_cube_centres(df, bounds)
         pbar.updt(pop_size,i+1)
     return pop
@@ -121,7 +121,7 @@ def breed(surv_series, df_scores, nr_children_limit):
     return breed_series
 
 def new_gen(population, df_train, df_scores, survival_rate, alien_rate, pop_size, prob_mutate, 
-          mutate_strength, bounds, keep_originals):
+          mutate_strength, bounds, iter_nr, keep_originals):
     df_scores.sort_values(ascending = False,inplace=True)
     nr_surv = ceil(survival_rate * pop_size)
     survivors = population[list(df_scores[:nr_surv].index)]
@@ -129,8 +129,9 @@ def new_gen(population, df_train, df_scores, survival_rate, alien_rate, pop_size
     surv_breed = breed(survivors, df_scores[:nr_surv],pop_size-nr_surv-nr_aliens)
     surv_mut, df_report = mutate(surv_breed, df_train.dtypes, bounds, probability=prob_mutate,
                           strength = mutate_strength, keep_originals=keep_originals)
-    aliens = gen_pop(df_train, bounds, nr_aliens)
+    alien_name = 'gen_'+str(iter_nr)+'_ind_'
+    aliens = gen_pop(df_train, bounds, nr_aliens, alien_name)
     df_new_gen = pd.concat([survivors, surv_mut, aliens])
     print(df_report)
-    return df_new_gen    
+    return df_new_gen, nr_surv    
     
