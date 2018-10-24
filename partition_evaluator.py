@@ -126,3 +126,17 @@ def get_containers(df, cubes):
     df_row_cube['row'] = df_row_cube.index
     df_rows_in_cube = df_row_cube.groupby('cube')['row'].apply(list)
     return df_rows_in_cube
+#%% prediction
+    
+def cube_prob(df_vic, labels):
+    cube_prob = pd.DataFrame(pd.Series(index = df_vic.index),columns=['nr_labels'])
+    for ind in df_vic.index:
+        cube_prob.loc[ind,'nr_labels'] = len(labels[df_vic[ind]])
+        cube_prob.loc[ind,'probability'] = sum(labels[df_vic[ind]])/cube_prob.loc[ind,'nr_labels']
+    return cube_prob
+
+def get_probs(part, X_train, y_train):
+    df_vic = get_containers(X_train, part)
+    df_probs = cube_prob(df_vic, y_train)
+    return df_probs
+    
