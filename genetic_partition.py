@@ -29,7 +29,9 @@ def bounds_df(df):
         bounds.loc[col,'lower'],bounds.loc[col,'upper'] = get_bounds(df[col])
     return bounds
 
-
+def delete_empty_cubes(part, df_vic):
+    new_part = part.loc[:,df_vic.index].copy()
+    return new_part
 
 def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05, 
           mutate_strength = .3, survival_rate = .1, alien_rate = .1):

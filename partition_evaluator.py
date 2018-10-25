@@ -140,3 +140,13 @@ def get_probs(part, X_train, y_train):
     df_probs = cube_prob(df_vic, y_train)
     return df_probs
     
+def predict(part, df_probs, X_test):
+    df_vic = get_containers(X_test, part)
+    print(df_vic)
+    df_predict = pd.Series(index = X_test.index)
+    for ind in df_vic.index:
+        for row in df_vic[ind]:
+            df_predict[row] = df_probs.loc[ind,'probability']
+    return df_predict
+    
+    

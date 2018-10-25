@@ -16,6 +16,7 @@ from tqdm import tqdm
 import genetic_partition as gen_part
 import genetic_mutator as gen_mut
 import partition_evaluator as part_eval
+import matplotlib.pyplot as plt
 #%%
 df = pd.read_csv('data/titanic_prepd.csv')
 df = df.set_index('PassengerId')
@@ -41,3 +42,15 @@ best_part = gen_part.train(X_train, y_train, 25, 2, prob_mutate = .05,
                            mutate_strength = .3, survival_rate = .1, alien_rate = .1)
 #%% probabilities associated with each cube in partition
 df_probs = part_eval.get_probs(best_part, X_train, y_train)
+# get rid of empty cubes
+df_vic = part_eval.get_containers(X_train, best_part)
+new_best_part = gen_part.delete_empty_cubes(best_part, df_vic)
+# try to get a prediction
+df_prediction = part_eval.predict(new_best_part, df_probs, X_test)
+df_prediction.sort_index(inplace=True)
+df_true_test = y_test.sort_index().copy()
+#%%
+from sklearn.metrics import roc_auc_score, roc_curve
+roc_auc_score(df_true_test, df_prediction)
+fpr, tpr, thresholds = roc_curve(df_true_test, df_prediction)
+plt.plot(fpr,tpr)
