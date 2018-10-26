@@ -17,6 +17,7 @@ import genetic_partition as gen_part
 import genetic_mutator as gen_mut
 import partition_evaluator as part_eval
 import matplotlib.pyplot as plt
+import gen_part_class as gpt
 #%%
 df = pd.read_csv('data/titanic_prepd.csv')
 df = df.set_index('PassengerId')
@@ -54,3 +55,8 @@ from sklearn.metrics import roc_auc_score, roc_curve
 roc_auc_score(df_true_test, df_prediction)
 fpr, tpr, thresholds = roc_curve(df_true_test, df_prediction)
 plt.plot(fpr,tpr)
+#%%
+estimator = gpt.partition_classifier(best_part)
+estimator.colonize(X_train, y_train)
+estimator.info_gain
+estimator.predict(X_test)
