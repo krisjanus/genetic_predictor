@@ -17,6 +17,7 @@ import math
 import pbar
 import genetic_mutator as gen_mut
 import partition_evaluator as part_eval
+import gen_part_class as gpt
 
 def get_bounds(column):
     upper = column.max()
@@ -36,15 +37,25 @@ def delete_empty_cubes(part, df_vic):
 def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05, 
           mutate_strength = .3, survival_rate = .1, alien_rate = .1):
     bounds = bounds_df(X_train)
-    pop = gen_mut.gen_pop(X_train, bounds, pop_size)
-    df_scores = part_eval.get_gain_scores(pop, X_train, y_train)
-    print('best:', df_scores.sort_values(ascending = False)[:1])
+    pop_parts = gen_mut.gen_pop(X_train, bounds, pop_size)
+    pop = pop_parts.apply(lambda x: gpt.partition_classifier(x))
+    pop.apply(lambda x: x.colonize(X_train, y_train))
+    df_scores = pop.apply(lambda x: x.info_gain)
+    df_scores.sort_values(ascending = False, inplace=True)
+    print('best:', df_scores[:1])
+    pop = pop[df_scores.index]
     for i in range(gen_size-1):
         print('generation', i+1)
-        pop, nr_surv = gen_mut.new_gen(pop, X_train, df_scores, survival_rate, alien_rate, 
+        pop_parts, nr_surv = gen_mut.new_gen(pop_parts, X_train, df_scores, survival_rate, alien_rate, 
                       pop_size, prob_mutate, mutate_strength, bounds, i+1, keep_originals=False)
-        df_scores = pd.concat([df_scores[:nr_surv],part_eval.get_gain_scores(pop[nr_surv:pop_size], X_train, y_train)])
-        print('best:', df_scores.sort_values(ascending = False)[:1])
-    return pop[list(df_scores.sort_values(ascending = False)[:1].index)].values[0]
+        pop_new = pop_parts.apply(lambda x: gpt.partition_classifier(x))
+        pop_new.apply(lambda x: x.colonize(X_train, y_train))
+        for ind in pop[:nr_surv].index:
+            pop_new[ind] = pop[ind]
+        df_scores = pd.concat([pop_new.apply(lambda x: x.info_gain)])
+        df_scores.sort_values(ascending = False, inplace=True)
+        print('best:', df_scores[:1])
+        pop = pop_new[df_scores.index]
+    return pop[list(df_scores[:1].index)].values[0]
 
        

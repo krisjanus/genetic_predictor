@@ -32,12 +32,12 @@ def gen_centre(df, bounds, probability=1, cur_split=np.nan):
         part[col] = split_p
     return part
 
-def gen_pop(df, bounds, pop_size, prefix='ind_'):
+def gen_pop(X_train, bounds, pop_size, prefix='ind_'):
     pop = pd.Series()
     print('generating individuals')
     for i in range(pop_size):
         name = prefix + str(i)
-        pop[name] = gen_cube_centres(df, bounds)
+        pop[name] = gen_cube_centres(X_train, bounds)
         pbar.updt(pop_size,i+1)
     return pop
 
@@ -131,7 +131,7 @@ def new_gen(population, df_train, df_scores, survival_rate, alien_rate, pop_size
                           strength = mutate_strength, keep_originals=keep_originals)
     alien_name = 'gen_'+str(iter_nr)+'_ind_'
     aliens = gen_pop(df_train, bounds, nr_aliens, alien_name)
-    df_new_gen = pd.concat([survivors, surv_mut, aliens])
+    df_new_gen = pd.concat([surv_mut, aliens])
     print(df_report)
     return df_new_gen, nr_surv    
     
