@@ -52,10 +52,11 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
         pop_new.apply(lambda x: x.colonize(X_train, y_train))
         for ind in pop[:nr_surv].index:
             pop_new[ind] = pop[ind]
-        df_scores = pd.concat([pop_new.apply(lambda x: x.info_gain)])
+        df_scores = pop_new.apply(lambda x: x.info_gain)
         df_scores.sort_values(ascending = False, inplace=True)
         print('best:', df_scores[:1])
         pop = pop_new[df_scores.index]
+        pop_parts = pop.apply(lambda x: x.part)
     return pop[list(df_scores[:1].index)].values[0]
 
        
