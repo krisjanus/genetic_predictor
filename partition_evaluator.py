@@ -54,16 +54,14 @@ def vectors_in_cubes_dict(cubes, features):
 def vector_in_cube_dict(cubes, features):
     df_vic = {}
     feature_len = len(features)
-    i=1
-    for row in features.index:
+    for i, row in enumerate(features.index):
         vic = False
         for cube_row in cubes.index:
             vic=vector_in_cube(cubes.loc[cube_row,:],features.loc[row,:])
             if vic:
                 df_vic[row] = cube_row
                 break
-        pbar.updt(feature_len,i)
-        i=i+1
+        pbar.updt(feature_len,i+1)
     df_vic = pd.Series(df_vic)
     df_vic = pd.DataFrame(df_vic, columns=['cube'])
     df_vic['row'] = df_vic.index
@@ -116,11 +114,9 @@ def get_container(row, cubes):
 def get_containers(df, cubes):
     df_row_cube = {}
     feature_len = len(df)
-    i=1
-    for row in df.index:
+    for i, row in enumerate(df.index):
         df_row_cube[row] = get_container(df.loc[row,:], cubes)
         pbar.updt(feature_len,i)
-        i=i+1
     df_row_cube = pd.Series(df_row_cube)
     df_row_cube = pd.DataFrame(df_row_cube, columns=['cube'])
     df_row_cube['row'] = df_row_cube.index

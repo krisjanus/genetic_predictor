@@ -39,24 +39,27 @@ surv_breed = gen_mut.breed(survivors, df_scores[:5],35)
 surv_mut, df_breed_report = gen_mut.mutate(surv_breed, X_train.dtypes, bounds, probability=.05,
                           strength = .2, keep_originals=False)
 #%% test the training module
-best_part = gen_part.train(X_train, y_train, 50, 20, prob_mutate = .05, 
+best_part = gen_part.train(X_train, y_train, 150, 30, prob_mutate = .05, 
                            mutate_strength = .3, survival_rate = .1, alien_rate = .1)
-#%% probabilities associated with each cube in partition
-df_probs = part_eval.get_probs(best_part, X_train, y_train)
-# get rid of empty cubes
-df_vic = part_eval.get_containers(X_train, best_part)
-new_best_part = gen_part.delete_empty_cubes(best_part, df_vic)
-# try to get a prediction
-df_prediction = part_eval.predict(new_best_part, df_probs, X_test)
+#%% evaluate best predictor
+df_prediction = best_part.predict(X_test)
 df_prediction.sort_index(inplace=True)
 df_true_test = y_test.sort_index().copy()
 #%%
 from sklearn.metrics import roc_auc_score, roc_curve
 roc_auc_score(df_true_test, df_prediction)
+#%%
 fpr, tpr, thresholds = roc_curve(df_true_test, df_prediction)
 plt.plot(fpr,tpr)
+plt.grid(True)
+plt.ylim(0,1)
+plt.xlim(0,1)
+plt.axes().set_aspect('equal')
+plt.show()
 #%%
 estimator = gpt.partition_classifier(best_part)
 estimator.colonize(X_train, y_train)
 estimator.info_gain
 estimator.predict(X_test)
+
+

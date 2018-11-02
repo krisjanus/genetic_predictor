@@ -32,7 +32,7 @@ def gen_centre(df, bounds, probability=1, cur_split=np.nan):
         part[col] = split_p
     return part
 
-def gen_pop(X_train, bounds, pop_size, prefix='ind_'):
+def gen_pop(X_train, bounds, pop_size, prefix='_'):
     pop = pd.Series()
     print('generating individuals')
     for i in range(pop_size):
@@ -43,12 +43,11 @@ def gen_pop(X_train, bounds, pop_size, prefix='ind_'):
 
 def gen_cube_centres(df, bounds, cubes=0):
     if cubes == 0:
-        cubes = len(df)
+        cubes = random.randint(1,2*len(df.columns))
     centres = pd.DataFrame(index=df.columns)
     for i in range(cubes):
         name = 'cube_' + str(i)
-        centres[name] = gen_centre(df, bounds)
-        
+        centres[name] = gen_centre(df, bounds)       
     return centres
 
 def gen_split(column_dtype, lower, upper, probability=1, cur_split=np.nan):
