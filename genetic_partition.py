@@ -56,6 +56,9 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
         df_scores.sort_values(ascending = False, inplace=True)
         print('best:', df_scores[:1])
         pop = pop_new[df_scores.index]
+        new_index = ['gen_' + str(i+1) + '_ind_' + str(x) for x in range(len(pop))]
+        df_scores.index = new_index
+        pop.index = new_index
         pop_parts = pop.apply(lambda x: x.part)
     return pop[list(df_scores[:1].index)].values[0]
 

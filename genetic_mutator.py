@@ -32,7 +32,7 @@ def gen_centre(df, bounds, probability=1, cur_split=np.nan):
         part[col] = split_p
     return part
 
-def gen_pop(X_train, bounds, pop_size, prefix='_'):
+def gen_pop(X_train, bounds, pop_size, prefix='ind'):
     pop = pd.Series()
     print('generating individuals')
     for i in range(pop_size):
