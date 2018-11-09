@@ -32,18 +32,17 @@ def gen_centre(df, bounds, probability=1, cur_split=np.nan):
         part[col] = split_p
     return part
 
-def gen_pop(X_train, bounds, pop_size, prefix='ind'):
+def gen_pop(X_train, bounds, pop_size, min_cubes, max_cubes, prefix='ind'):
     pop = pd.Series()
     print('generating individuals')
     for i in range(pop_size):
         name = prefix + str(i)
-        pop[name] = gen_cube_centres(X_train, bounds)
+        pop[name] = gen_cube_centres(X_train, bounds, min_cubes, max_cubes)
         pbar.updt(pop_size,i+1)
     return pop
 
-def gen_cube_centres(df, bounds, cubes=0):
-    if cubes == 0:
-        cubes = random.randint(1,2*len(df.columns))
+def gen_cube_centres(df, bounds, min_cubes, max_cubes):
+    cubes = random.randint(min_cubes,max_cubes)
     centres = pd.DataFrame(index=df.columns)
     for i in range(cubes):
         name = 'cube_' + str(i)
@@ -119,8 +118,30 @@ def breed(surv_series, df_scores, nr_children_limit):
         breed_series[name_2] = new_ind_2
     return breed_series
 
+# is this better: initial test can't really see the difference
+def new_breed(surv_series, df_scores, nr_children_limit):
+    breed_series = pd.Series()
+    list_of_pairs = [(surv_series.index[p1], surv_series.index[p2], (df_scores[p1]+df_scores[p2])/2) 
+                                            for p1 in range(len(surv_series)) 
+                                            for p2 in range(p1+1,len(surv_series))]
+    sorted(list_of_pairs, reverse=True, key=lambda x:x[2])
+    breed_limit = min([len(list_of_pairs)*2,nr_children_limit])
+    for index_1, index_2, breed_prob in list_of_pairs[:breed_limit]:
+        print(breed_prob)
+        col_len = len(surv_series[index_1].index)
+        split_point = random.choice(range(col_len))
+        new_ind_1 = pd.concat([surv_series[index_1].iloc[:split_point,:], 
+                               surv_series[index_2].iloc[split_point:col_len,:]])
+        new_ind_2 = pd.concat([surv_series[index_2].iloc[:split_point,:], 
+                               surv_series[index_1].iloc[split_point:col_len,:]])
+        name_1 = index_1 + '_' + index_2
+        name_2 = index_2 + '_' + index_1
+        breed_series[name_1] = new_ind_1
+        breed_series[name_2] = new_ind_2
+    return breed_series
+
 def new_gen(population, df_train, df_scores, survival_rate, alien_rate, pop_size, prob_mutate, 
-          mutate_strength, bounds, iter_nr, keep_originals):
+          mutate_strength, bounds, iter_nr, min_cubes, max_cubes, keep_originals):
     df_scores.sort_values(ascending = False,inplace=True)
     nr_surv = ceil(survival_rate * pop_size)
     survivors = population[list(df_scores[:nr_surv].index)]
@@ -129,7 +150,7 @@ def new_gen(population, df_train, df_scores, survival_rate, alien_rate, pop_size
     surv_mut, df_report = mutate(surv_breed, df_train.dtypes, bounds, probability=prob_mutate,
                           strength = mutate_strength, keep_originals=keep_originals)
     alien_name = 'gen_'+str(iter_nr)+'_ind_'
-    aliens = gen_pop(df_train, bounds, nr_aliens, alien_name)
+    aliens = gen_pop(df_train, bounds, nr_aliens, min_cubes, max_cubes, alien_name)
     df_new_gen = pd.concat([surv_mut, aliens])
     print(df_report)
     return df_new_gen, nr_surv    

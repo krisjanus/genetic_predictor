@@ -10,18 +10,19 @@ import partition_evaluator as part_eval
 
 class partition_classifier():
     def __init__(self, df_partition, X_train = None, y_train = None, df_vic = None, 
-                 df_proba = None, info_gain = None):
+                 df_proba = None, info_gain = None, part_norm=None):
         self.part = df_partition
         self.vectors_in_cubes = df_vic
         self.probs_in_cube = df_proba
         self.info_gain = info_gain
         self.training_data = X_train
         self.training_labels = y_train
+        self.part_norm = part_norm
         
     def colonize(self, X_train, y_train):
         self.X_train = X_train
         self.y_train = y_train
-        self.vectors_in_cubes = part_eval.get_containers(X_train, self.part)
+        self.vectors_in_cubes = part_eval.get_containers(X_train, self.part, self.part_norm)
         self.part = self.part.loc[:,self.vectors_in_cubes.index].copy()
         self.probs_in_cube = part_eval.cube_prob(self.vectors_in_cubes, y_train)
         self.info_gain = part_eval.info_gain(self.vectors_in_cubes, y_train)

@@ -100,22 +100,22 @@ def get_cubes(paired_part, parent_lists=[[]], index=0):
 def get_gain_scores(pop, X_train, y_train):
     df_scores = pd.Series(index = pop.index)
     for individual in pop.index:
-        print('Evaluating',individual)
+        print('\nEvaluating\n',individual)
         df_vic = get_containers(X_train, pop[individual])
         df_scores[individual] = info_gain(df_vic, y_train)
     return df_scores
 
-def get_container(row, cubes):
+def get_container(row, cubes, norm):
     distances = {}
     for i in cubes.columns:
-        distances[i] = np.linalg.norm(cubes[i].values-row.values,ord=1)
+        distances[i] = np.linalg.norm(cubes[i].values-row.values,ord=norm)
     return min(distances, key=distances.get)
 
-def get_containers(df, cubes):
+def get_containers(df, cubes, norm):
     df_row_cube = {}
     feature_len = len(df)
     for i, row in enumerate(df.index):
-        df_row_cube[row] = get_container(df.loc[row,:], cubes)
+        df_row_cube[row] = get_container(df.loc[row,:], cubes, norm)
         pbar.updt(feature_len,i)
     df_row_cube = pd.Series(df_row_cube)
     df_row_cube = pd.DataFrame(df_row_cube, columns=['cube'])

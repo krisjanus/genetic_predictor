@@ -18,6 +18,8 @@ import genetic_mutator as gen_mut
 import partition_evaluator as part_eval
 import matplotlib.pyplot as plt
 import gen_part_class as gpt
+from math import floor
+import tic_toc
 #%%
 df = pd.read_csv('data/titanic_prepd.csv')
 df = df.set_index('PassengerId')
@@ -39,8 +41,13 @@ surv_breed = gen_mut.breed(survivors, df_scores[:5],35)
 surv_mut, df_breed_report = gen_mut.mutate(surv_breed, X_train.dtypes, bounds, probability=.05,
                           strength = .2, keep_originals=False)
 #%% test the training module
-best_part = gen_part.train(X_train, y_train, 20, 3, prob_mutate = .05, 
-                           mutate_strength = .3, survival_rate = .1, alien_rate = .1)
+tic_toc.tic()
+nr_cols = len(X_train.columns)
+best_part = gen_part.train(X_train, y_train, 100, 2, prob_mutate = .05, 
+                           mutate_strength = .3, survival_rate = .1, 
+                           alien_rate = .1, min_cubes = floor(nr_cols/2),
+                           max_cubes = nr_cols*3)
+tic_toc.toc()
 #%% evaluate best predictor
 df_prediction = best_part.predict(X_test)
 df_prediction.sort_index(inplace=True)

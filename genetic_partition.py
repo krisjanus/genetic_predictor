@@ -23,21 +23,22 @@ def get_bounds(column):
     upper = column.max()
     lower = column.min()
     return lower,upper
-    
-def bounds_df(df):
-    bounds=pd.DataFrame(index=df.columns, columns=['lower','upper'])
-    for col in df.columns:
-        bounds.loc[col,'lower'],bounds.loc[col,'upper'] = get_bounds(df[col])
-    return bounds
 
 def delete_empty_cubes(part, df_vic):
     new_part = part.loc[:,df_vic.index].copy()
     return new_part
 
 def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05, 
-          mutate_strength = .3, survival_rate = .1, alien_rate = .1):
-    bounds = bounds_df(X_train)
-    pop_parts = gen_mut.gen_pop(X_train, bounds, pop_size)
+          mutate_strength = .3, survival_rate = .1, alien_rate = .1,
+          min_cubes = 1, max_cubes = 20):
+    
+    #get bounds of each column
+    bounds = X_train.apply(get_bounds, axis=0).apply(pd.Series)
+    bounds.rename(index=str, columns={0:'lower',1:'upper'}, inplace=True)
+    
+    #generate a population of partitions
+    pop_parts = gen_mut.gen_pop(X_train, bounds, pop_size, min_cubes, max_cubes)
+    
     pop = pop_parts.apply(lambda x: gpt.partition_classifier(x))
     pop.apply(lambda x: x.colonize(X_train, y_train))
     df_scores = pop.apply(lambda x: x.info_gain)
@@ -47,7 +48,8 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
     for i in range(gen_size-1):
         print('generation', i+1)
         pop_parts, nr_surv = gen_mut.new_gen(pop_parts, X_train, df_scores, survival_rate, alien_rate, 
-                      pop_size, prob_mutate, mutate_strength, bounds, i+1, keep_originals=False)
+                      pop_size, prob_mutate, mutate_strength, bounds, i+1, min_cubes,
+                      max_cubes, keep_originals=False)
         pop_new = pop_parts.apply(lambda x: gpt.partition_classifier(x))
         pop_new.apply(lambda x: x.colonize(X_train, y_train))
         for ind in pop[:nr_surv].index:
