@@ -42,19 +42,21 @@ surv_mut, df_breed_report = gen_mut.mutate(surv_breed, X_train.dtypes, bounds, p
                           strength = .2, keep_originals=False)
 #%% test the training module
 tic_toc.tic()
-nr_cols = len(X_train.columns)
-best_part = gen_part.train(X_train, y_train, 100, 2, prob_mutate = .05, 
+size = len(X_train)
+best_part = gen_part.train(X_train, y_train, 60, 4, prob_mutate = .05, 
                            mutate_strength = .3, survival_rate = .1, 
-                           alien_rate = .1, min_cubes = floor(nr_cols/2),
-                           max_cubes = nr_cols*3)
+                           alien_rate = .1, min_cubes = floor(size/2),
+                           max_cubes = size, X_test = X_test, y_test = y_test,
+                           metric = 'auc')
 tic_toc.toc()
 #%% evaluate best predictor
 df_prediction = best_part.predict(X_test)
 df_prediction.sort_index(inplace=True)
 df_true_test = y_test.sort_index().copy()
 #%%
-from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.metrics import roc_auc_score, roc_curve, accuracy_score
 roc_auc_score(df_true_test, df_prediction)
+accuracy_score(df_true_test, df_prediction>.3)
 #%%
 fpr, tpr, thresholds = roc_curve(df_true_test, df_prediction)
 plt.plot(fpr,tpr)

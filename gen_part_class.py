@@ -7,29 +7,38 @@ Created on Fri Oct 26 06:21:53 2018
 """
 import pandas as pd
 import partition_evaluator as part_eval
+from sklearn.metrics import roc_auc_score
 
 class partition_classifier():
-    def __init__(self, df_partition, X_train = None, y_train = None, df_vic = None, 
-                 df_proba = None, info_gain = None, part_norm=None):
+    def __init__(self, df_partition, X_train = None, y_train = None, 
+                 X_test = None, y_test = None, df_vic = None, 
+                 df_proba = None, info_gain = None, auc = None, part_norm=None):
         self.part = df_partition
         self.vectors_in_cubes = df_vic
         self.probs_in_cube = df_proba
         self.info_gain = info_gain
-        self.training_data = X_train
-        self.training_labels = y_train
+        self.X_train = X_train
+        self.y_train = y_train
         self.part_norm = part_norm
+        self.X_test = X_test
+        self.y_test = y_test
+        self.auc = auc
         
-    def colonize(self, X_train, y_train):
+    def colonize(self, X_train, y_train, X_test = None, y_test = None):
         self.X_train = X_train
         self.y_train = y_train
         self.vectors_in_cubes = part_eval.get_containers(X_train, self.part, self.part_norm)
         self.part = self.part.loc[:,self.vectors_in_cubes.index].copy()
         self.probs_in_cube = part_eval.cube_prob(self.vectors_in_cubes, y_train)
         self.info_gain = part_eval.info_gain(self.vectors_in_cubes, y_train)
+        if X_test is not None:
+            df_prediction = self.predict(X_test)
+            df_prediction.sort_index(inplace=True)
+            df_true_test = y_test.sort_index().copy()
+            self.auc = roc_auc_score(df_true_test, df_prediction)
     
     def predict(self, X_test):
-        df_vic = part_eval.get_containers(X_test, self.part)
-        print(df_vic)
+        df_vic = part_eval.get_containers(X_test, self.part, self.part_norm)
         df_predict = pd.Series(index = X_test.index)
         for ind in df_vic.index:
             for row in df_vic[ind]:

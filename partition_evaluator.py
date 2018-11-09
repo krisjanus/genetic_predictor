@@ -100,7 +100,7 @@ def get_cubes(paired_part, parent_lists=[[]], index=0):
 def get_gain_scores(pop, X_train, y_train):
     df_scores = pd.Series(index = pop.index)
     for individual in pop.index:
-        print('\nEvaluating\n',individual)
+#        print('\nEvaluating\n',individual)
         df_vic = get_containers(X_train, pop[individual])
         df_scores[individual] = info_gain(df_vic, y_train)
     return df_scores
