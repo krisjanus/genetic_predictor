@@ -42,12 +42,12 @@ surv_mut, df_breed_report = gen_mut.mutate(surv_breed, X_train.dtypes, bounds, p
                           strength = .2, keep_originals=False)
 #%% test the training module
 tic_toc.tic()
-size = len(X_train)
-best_part = gen_part.train(X_train, y_train, 60, 4, prob_mutate = .05, 
+size = len(df*.8)
+best_part = gen_part.train(X_train, y_train, 100, 10, prob_mutate = .05, 
                            mutate_strength = .3, survival_rate = .1, 
                            alien_rate = .1, min_cubes = floor(size/2),
-                           max_cubes = size, X_test = X_test, y_test = y_test,
-                           metric = 'auc')
+                           max_cubes = size, metric = 'auc', validation=.2,
+                           seed=7)
 tic_toc.toc()
 #%% evaluate best predictor
 df_prediction = best_part.predict(X_test)
