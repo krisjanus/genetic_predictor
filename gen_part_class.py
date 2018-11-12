@@ -30,13 +30,13 @@ class partition_classifier():
         self.part = self.part.loc[:,self.vectors_in_cubes.index].copy()
         self.probs_in_cube = part_eval.cube_prob(self.vectors_in_cubes, self.y_train)
         self.info_gain = part_eval.info_gain(self.vectors_in_cubes, self.y_train)
-        print('information gain:',self.info_gain)
+        print('\ninformation gain:',self.info_gain)
         if (self.X_test is not None):
             df_prediction = self.predict(self.X_test)
             df_prediction.sort_index(inplace=True)
             df_true_test = self.y_test.sort_index().copy()
             self.auc = roc_auc_score(df_true_test, df_prediction)
-            print('auc:',self.auc)
+            print('\nauc:',self.auc)
     
     def predict(self, X_test):
         df_vic = part_eval.get_containers(X_test, self.part, self.part_norm)

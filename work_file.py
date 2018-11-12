@@ -56,7 +56,13 @@ df_true_test = y_test.sort_index().copy()
 #%%
 from sklearn.metrics import roc_auc_score, roc_curve, accuracy_score
 roc_auc_score(df_true_test, df_prediction)
-accuracy_score(df_true_test, df_prediction>.3)
+best_acc = 0
+best_tr = 0
+for threshold in np.arange(0,1.01,.01):
+    acc = accuracy_score(df_true_test, df_prediction>threshold)
+    if acc > best_acc:
+        best_acc = acc
+        best_tr = threshold
 #%%
 fpr, tpr, thresholds = roc_curve(df_true_test, df_prediction)
 plt.plot(fpr,tpr)
