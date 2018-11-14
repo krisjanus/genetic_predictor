@@ -116,7 +116,7 @@ def get_containers(df, cubes, norm):
     feature_len = len(df)
     for i, row in enumerate(df.index):
         df_row_cube[row] = get_container(df.loc[row,:], cubes, norm)
-        pbar.updt(feature_len,i)
+#        pbar.updt(feature_len,i)
     df_row_cube = pd.Series(df_row_cube)
     df_row_cube = pd.DataFrame(df_row_cube, columns=['cube'])
     df_row_cube['row'] = df_row_cube.index

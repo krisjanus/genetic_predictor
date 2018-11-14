@@ -13,7 +13,8 @@ from sklearn.metrics import roc_auc_score
 class partition_classifier():
     def __init__(self, df_partition = None, df_vic = None,
                  df_proba = None, info_gain = None, auc = None, part_norm=2):
-        self.part = df_partition.astype('float')
+        if df_partition is not None:
+            self.part = df_partition.astype('float')
 #        self.vectors_in_cubes = df_vic
 #        self.probs_in_cube = df_proba
 #        self.info_gain = info_gain
@@ -53,4 +54,12 @@ class partition_classifier():
         scalars['auc'] = self.auc
         scalars['part_norm'] = self.part_norm
         scalars.astype('float').to_hdf(filename, key='scalars')
-        
+    
+    def load(self, filename='gpt_model.h5'):
+        self.part = pd.read_hdf(filename, key = 'part')
+#        self.vectors_in_cubes.to_hdf(filename, key = 'vectors_in_cubes')
+        self.probs_in_cube = pd.read_hdf(filename, key = 'probs_in_cube')
+        scalars = pd.read_hdf(filename, key='scalars')
+        self.info_gain = scalars['info_gain']
+        self.auc = scalars['auc']
+        self.part_norm = scalars['part_norm']

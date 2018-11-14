@@ -29,26 +29,22 @@ X_train, X_test, y_train, y_test = train_test_split(df.drop(['Survived'],axis=1)
                                                     df['Survived'], 
                                                     test_size=.2)
 
-#%% new vector approach
-# generate a population of partitions
-pop = gen_part.gen_pop(X_train, 100)
-# evaluate each individual and return an information gain score
-df_scores = part_eval.get_gain_scores(pop, X_train, y_train)
-#%% testing mutation functionality
 
-surv_breed = gen_mut.breed(survivors, df_scores[:5],35)
-
-surv_mut, df_breed_report = gen_mut.mutate(surv_breed, X_train.dtypes, bounds, probability=.05,
-                          strength = .2, keep_originals=False)
 #%% test the training module
 tic_toc.tic()
-size = len(df*.8)
-best_part = gen_part.train(X_train, y_train, 100, 10, prob_mutate = .05, 
+size = len(X_train)
+best_part = gen_part.train(X_train, y_train, 12, 3, prob_mutate = .05, 
                            mutate_strength = .3, survival_rate = .1, 
                            alien_rate = .1, min_cubes = floor(size/2),
                            max_cubes = size, metric = 'auc', validation=.2,
                            seed=7)
 tic_toc.toc()
+#%% test saving and loading
+best_part.save('test_save.h5')
+
+estimator = gpt.partition_classifier()
+estimator.load(filename = 'data/test_save.h5')
+df_prediction = estimator.predict(X_test)
 #%% evaluate best predictor
 df_prediction = best_part.predict(X_test)
 df_prediction.sort_index(inplace=True)
@@ -78,3 +74,16 @@ estimator.info_gain
 estimator.predict(X_test)
 
 
+
+
+#%%
+# generate a population of partitions
+pop = gen_part.gen_pop(X_train, 100)
+# evaluate each individual and return an information gain score
+df_scores = part_eval.get_gain_scores(pop, X_train, y_train)
+#%% testing mutation functionality
+
+surv_breed = gen_mut.breed(survivors, df_scores[:5],35)
+
+surv_mut, df_breed_report = gen_mut.mutate(surv_breed, X_train.dtypes, bounds, probability=.05,
+                          strength = .2, keep_originals=False)
