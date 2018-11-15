@@ -9,7 +9,8 @@ this file contains the class definition for core partition predictor object
 """
 import pandas as pd
 import partition_evaluator as part_eval
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, accuracy_score
+import numpy as np
 
 # class defining one partition classifier object
 class partition_classifier():
@@ -43,7 +44,14 @@ class partition_classifier():
             df_prediction.sort_index(inplace=True)
             df_true_test = self.y_test.sort_index().copy()
             self.auc = roc_auc_score(df_true_test, df_prediction)
-            print(' auc:',self.auc)
+            self.acc = 0
+            self.acc_thres = 0
+            for threshold in np.arange(0,1.01,.01):
+                acc = accuracy_score(df_true_test, df_prediction>threshold)
+                if acc > self.acc:
+                    self.acc = acc
+                    self.acc_thres = threshold
+            print(' auc:',self.auc,'\nacc:',self.acc)
     
     def predict(self, X_test):
         # assign each data point to a cell

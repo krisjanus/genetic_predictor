@@ -47,7 +47,7 @@ def gen_pop(X_train, bounds, pop_size, min_cubes, max_cubes, prefix='ind'):
     print('generating individuals')
     for i in range(pop_size):
         name = prefix + str(i)
-        if pop_size % 2 == 0:
+        if random.random() >= .7:
             pop[name] = gen_cube_centres(X_train, bounds, min_cubes, max_cubes)
         else:
             pop[name] = gen_cluster_centres(X_train)
@@ -120,11 +120,14 @@ def breed(surv_series, df_scores, nr_children_limit):
     for i in breed_pair_index[:breed_limit]:
         index_1, index_2 = list_of_pairs[i]
         col_len = len(surv_series[index_1].index)
-        split_point = random.choice(range(col_len))
-        new_ind_1 = pd.concat([surv_series[index_1].iloc[:split_point,:], 
-                               surv_series[index_2].iloc[split_point:col_len,:]])
-        new_ind_2 = pd.concat([surv_series[index_2].iloc[:split_point,:], 
-                               surv_series[index_1].iloc[split_point:col_len,:]])
+        new_ind_1 = pd.DataFrame()
+        new_ind_2 = pd.DataFrame()
+        for col_num, col in enumerate(surv_series[index_1].index):
+            split_point = random.choice(range(col_len))
+            new_ind_1[col] = pd.concat([surv_series[index_1].iloc[:split_point,col_num], 
+                                   surv_series[index_2].iloc[split_point:col_len,col_num]])
+            new_ind_2[col] = pd.concat([surv_series[index_2].iloc[:split_point,col_num], 
+                                   surv_series[index_1].iloc[split_point:col_len,col_num]])
         name_1 = index_1 + '_' + index_2
         name_2 = index_2 + '_' + index_1
         breed_series[name_1] = new_ind_1

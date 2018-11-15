@@ -38,11 +38,12 @@ X_train, X_test, y_train, y_test = train_test_split(df.drop(['label'],axis=1),
 #%% test the training module
 tic_toc.tic()
 size = len(X_train)
-best_part = gen_part.train(X_train, y_train, 20, 3, prob_mutate = .05, 
+# titanic does well with norm 1
+best_part = gen_part.train(X_train, y_train, 30, 6, prob_mutate = .05, 
                            mutate_strength = .3, survival_rate = .1, 
-                           alien_rate = .1, min_cubes = floor(size/2),
-                           max_cubes = size, metric = 'auc', validation=.2,
-                           seed=7)
+                           alien_rate = .1, min_cubes = floor(3*size/4),
+                           max_cubes = size, metric = 'acc', validation=.2,
+                           seed=7, part_norm=1)
 tic_toc.toc()
 #%% test saving and loading
 best_part.save('test_save.h5')

@@ -32,7 +32,8 @@ def auc_score(individual, X_test, y_test):
 # main function that performs training, and selects best predictor
 def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05, 
           mutate_strength = .3, survival_rate = .1, alien_rate = .1,
-          min_cubes = 2, max_cubes = 20, metric='info_gain', validation=0, seed=None):
+          min_cubes = 2, max_cubes = 20, metric='info_gain', validation=0, 
+          seed=None, part_norm=2):
     
     # define a validation set - best to have this as information gain on its own
     # can be misleading
@@ -57,7 +58,7 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
     #generate a population of partitions
     pop_parts = gen_mut.gen_pop(X_train, bounds, pop_size, min_cubes, max_cubes)
     # initialize the partition classifier class
-    pop = pop_parts.apply(lambda x: gpt.partition_classifier(x))
+    pop = pop_parts.apply(lambda x: gpt.partition_classifier(x, part_norm))
     
     # fit data and evaluate performance for each individual
     print('Colonizing data')
@@ -65,6 +66,8 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
     
     if (validation > 0) and (metric == 'auc'):
         df_scores = pop.apply(lambda x: x.auc)
+    elif (validation > 0) and (metric == 'acc'):
+        df_scores = pop.apply(lambda x: x.acc)
     else:
         df_scores = pop.apply(lambda x: x.info_gain)
         
@@ -76,12 +79,14 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
         pop_parts, nr_surv = gen_mut.new_gen(pop_parts, X_train, df_scores, survival_rate, alien_rate, 
                       pop_size, prob_mutate, mutate_strength, bounds, i+1, min_cubes,
                       max_cubes, keep_originals=False)
-        pop_new = pop_parts.apply(lambda x: gpt.partition_classifier(x))
+        pop_new = pop_parts.apply(lambda x: gpt.partition_classifier(x, part_norm))
         pop_new.apply(lambda x: x.colonize(X_train, y_train, X_test, y_test))
         for ind in pop[:nr_surv].index:
             pop_new[ind] = pop[ind]
         if (validation>0) and (metric == 'auc'):
             df_scores = pop_new.apply(lambda x: x.auc)
+        elif (validation > 0) and (metric == 'acc'):
+            df_scores = pop_new.apply(lambda x: x.acc)
         else:
             df_scores = pop_new.apply(lambda x: x.info_gain)
 #        df_scores = pop_new.apply(lambda x: x.info_gain)
