@@ -5,18 +5,10 @@ Created on Mon Sep 24 17:20:24 2018
 
 @author: krisjan
 
-get a collection of splits
-how many splits per variable?
--get some idea of label distribution along variable
-labels in a cube?
-
+main training module
 """
 import pandas as pd
-import numpy as np
-import math
-import pbar
 import genetic_mutator as gen_mut
-import partition_evaluator as part_eval
 import gen_part_class as gpt
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split, StratifiedKFold
@@ -37,10 +29,13 @@ def auc_score(individual, X_test, y_test):
     
     return roc_auc_score(df_true_test, df_prediction)
 
+# main function that performs training, and selects best predictor
 def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05, 
           mutate_strength = .3, survival_rate = .1, alien_rate = .1,
           min_cubes = 2, max_cubes = 20, metric='info_gain', validation=0, seed=None):
     
+    # define a validation set - best to have this as information gain on its own
+    # can be misleading
     if validation == 0:
         X_train = X_train
         y_train = y_train
@@ -50,6 +45,7 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
         X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, 
                                                     test_size=validation,
                                                     random_state=seed)
+    # provision for cross validation
     else:
         skf = StratifiedKFold(n_splits=validation)
         train_test_idx = [(x,y) for x,y in skf.split(X_train, y_train)]
@@ -60,8 +56,10 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
     
     #generate a population of partitions
     pop_parts = gen_mut.gen_pop(X_train, bounds, pop_size, min_cubes, max_cubes)
-    
+    # initialize the partition classifier class
     pop = pop_parts.apply(lambda x: gpt.partition_classifier(x))
+    
+    # fit data and evaluate performance for each individual
     print('Colonizing data')
     pop.apply(lambda x: x.colonize(X_train, y_train, X_test, y_test))
     

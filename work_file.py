@@ -12,10 +12,7 @@ os.chdir('/Users/krisjan/repos/genetic_predictor')
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from tqdm import tqdm
 import genetic_partition as gen_part
-import genetic_mutator as gen_mut
-import partition_evaluator as part_eval
 import matplotlib.pyplot as plt
 import gen_part_class as gpt
 from math import floor
@@ -46,12 +43,12 @@ estimator = gpt.partition_classifier()
 estimator.load(filename = 'data/test_save.h5')
 df_prediction = estimator.predict(X_test)
 #%% evaluate best predictor
+from sklearn.metrics import roc_curve, accuracy_score
+#%%
 df_prediction = best_part.predict(X_test)
 df_prediction.sort_index(inplace=True)
 df_true_test = y_test.sort_index().copy()
-#%%
-from sklearn.metrics import roc_auc_score, roc_curve, accuracy_score
-roc_auc_score(df_true_test, df_prediction)
+
 best_acc = 0
 best_tr = 0
 for threshold in np.arange(0,1.01,.01):
@@ -67,14 +64,11 @@ plt.ylim(0,1)
 plt.xlim(0,1)
 plt.axes().set_aspect('equal')
 plt.show()
-#%%
-estimator = gpt.partition_classifier(best_part)
-estimator.colonize(X_train, y_train)
-estimator.info_gain
-estimator.predict(X_test)
 
 
-
+#%% Testing parts of modules
+import genetic_mutator as gen_mut
+import partition_evaluator as part_eval
 
 #%%
 # generate a population of partitions

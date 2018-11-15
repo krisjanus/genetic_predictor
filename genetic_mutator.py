@@ -4,6 +4,8 @@
 Created on Mon Oct  8 06:08:52 2018
 
 @author: krisjan
+
+evolutionary module: generates population and applies genetic algorithm
 """
 
 import pandas as pd
