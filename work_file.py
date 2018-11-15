@@ -17,20 +17,28 @@ import matplotlib.pyplot as plt
 import gen_part_class as gpt
 from math import floor
 import tic_toc
-#%%
+#%% titanic
 df = pd.read_csv('data/titanic_prepd.csv')
 df = df.set_index('PassengerId')
 df.drop(['ticket_numbers'],axis=1,inplace=True)
-#%%
+
 X_train, X_test, y_train, y_test = train_test_split(df.drop(['Survived'],axis=1), 
                                                     df['Survived'], 
                                                     test_size=.2)
-
+#%% iris binary
+df = pd.read_csv('data/iris_binary_prepd.csv')
+#%% bike buyer 
+df = pd.read_csv('data/bike_buyer_prepd.csv')
+df = df.set_index('ID')
+#%%
+X_train, X_test, y_train, y_test = train_test_split(df.drop(['label'],axis=1), 
+                                                    df['label'], 
+                                                    test_size=.2)
 
 #%% test the training module
 tic_toc.tic()
 size = len(X_train)
-best_part = gen_part.train(X_train, y_train, 12, 3, prob_mutate = .05, 
+best_part = gen_part.train(X_train, y_train, 20, 3, prob_mutate = .05, 
                            mutate_strength = .3, survival_rate = .1, 
                            alien_rate = .1, min_cubes = floor(size/2),
                            max_cubes = size, metric = 'auc', validation=.2,
