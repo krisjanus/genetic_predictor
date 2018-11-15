@@ -24,7 +24,7 @@ df.drop(['ticket_numbers'],axis=1,inplace=True)
 
 X_train, X_test, y_train, y_test = train_test_split(df.drop(['Survived'],axis=1), 
                                                     df['Survived'], 
-                                                    test_size=.2)
+                                                    test_size=.1)
 #%% iris binary
 df = pd.read_csv('data/iris_binary_prepd.csv')
 #%% bike buyer 
@@ -33,7 +33,7 @@ df = df.set_index('ID')
 #%%
 X_train, X_test, y_train, y_test = train_test_split(df.drop(['label'],axis=1), 
                                                     df['label'], 
-                                                    test_size=.2)
+                                                    test_size=.1)
 
 #%% test the training module
 tic_toc.tic()
