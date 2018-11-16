@@ -107,7 +107,7 @@ def mutate(surv_series, df_dtypes, bounds, probability = .01, strength = .2, kee
             mut_series[new_ind] = mutant
     return mut_series, df_report
             
-              
+# breed along columns: so swapping coordinates of every cube - not used for now             
 def breed(surv_series, df_scores, nr_children_limit):
     breed_series = pd.Series()
     list_of_pairs = [(surv_series.index[p1], surv_series.index[p2]) 
@@ -136,22 +136,29 @@ def breed(surv_series, df_scores, nr_children_limit):
         breed_series[name_2] = new_ind_2
     return breed_series
 
-# is this better: initial test can't really see the difference
-def new_breed(surv_series, df_scores, nr_children_limit):
+# breed along rows: so swapping centroids - need to refine how the different 
+# lengths are treated
+def breed_centroid(surv_series, df_scores, nr_children_limit):
     breed_series = pd.Series()
-    list_of_pairs = [(surv_series.index[p1], surv_series.index[p2], (df_scores[p1]+df_scores[p2])/2) 
+    list_of_pairs = [(surv_series.index[p1], surv_series.index[p2]) 
                                             for p1 in range(len(surv_series)) 
                                             for p2 in range(p1+1,len(surv_series))]
-    sorted(list_of_pairs, reverse=True, key=lambda x:x[2])
-    breed_limit = min([len(list_of_pairs)*2,nr_children_limit])
-    for index_1, index_2, breed_prob in list_of_pairs[:breed_limit]:
-        print(breed_prob)
-        col_len = len(surv_series[index_1].index)
-        split_point = random.choice(range(col_len))
-        new_ind_1 = pd.concat([surv_series[index_1].iloc[:split_point,:], 
-                               surv_series[index_2].iloc[split_point:col_len,:]])
-        new_ind_2 = pd.concat([surv_series[index_2].iloc[:split_point,:], 
-                               surv_series[index_1].iloc[split_point:col_len,:]])
+    list_of_probs =  pd.Series([(df_scores[p1]+df_scores[p2])/2 
+                                            for p1 in range(len(df_scores)) 
+                                            for p2 in range(p1+1,len(df_scores))])
+    list_of_probs.sort_values(ascending=False, inplace=True)
+    breed_pair_index = list(list_of_probs.index)
+    breed_limit = min([len(breed_pair_index)*2,nr_children_limit])
+    for i in breed_pair_index[:breed_limit]:
+        index_1, index_2 = list_of_pairs[i]
+        cell_len = len(surv_series[index_1].columns)
+        split_point = random.choice(range(cell_len))
+        new_ind_1 = surv_series[index_1].iloc[:,:split_point].merge( 
+                               surv_series[index_2].iloc[:,split_point:cell_len],
+                                left_index=True, right_index=True)
+        new_ind_2 = surv_series[index_2].iloc[:,:split_point].merge( 
+                               surv_series[index_1].iloc[:,split_point:cell_len],
+                               left_index=True, right_index=True)
         name_1 = index_1 + '_' + index_2
         name_2 = index_2 + '_' + index_1
         breed_series[name_1] = new_ind_1
@@ -164,7 +171,7 @@ def new_gen(population, df_train, df_scores, survival_rate, alien_rate, pop_size
     nr_surv = ceil(survival_rate * pop_size)
     survivors = population[list(df_scores[:nr_surv].index)]
     nr_aliens = floor(alien_rate * pop_size)
-    surv_breed = breed(survivors, df_scores[:nr_surv],pop_size-nr_surv-nr_aliens)
+    surv_breed = breed_centroid(survivors, df_scores[:nr_surv],pop_size-nr_surv-nr_aliens)
     surv_mut, df_report = mutate(surv_breed, df_train.dtypes, bounds, probability=prob_mutate,
                           strength = mutate_strength, keep_originals=keep_originals)
     alien_name = 'gen_'+str(iter_nr)+'_ind_'
