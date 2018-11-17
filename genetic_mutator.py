@@ -36,7 +36,7 @@ def gen_centre(df, bounds, probability=1, cur_split=np.nan):
     return part
 
 def gen_cluster_centres(df):
-    cubes = random.randint(2,floor(len(df)/3))
+    cubes = random.randint(2,20)
     centres = pd.DataFrame(KMeans(n_clusters = cubes, init='random').fit(df).cluster_centers_.T, 
                            index=df.columns)
     centres.columns = pd.Series(centres.columns).apply(lambda x:'cube_' + str(x))      
@@ -49,7 +49,7 @@ def gen_pop(X_train, bounds, pop_size, min_cubes, max_cubes, prefix='ind'):
         name = prefix + str(i)
         # random choice to generate random partition or cluster centroids
         # could become a parameter
-        if random.random() >= .1:
+        if random.random() >= .3:
             pop[name] = gen_cube_centres(X_train, bounds, min_cubes, max_cubes)
         else:
             pop[name] = gen_cluster_centres(X_train)

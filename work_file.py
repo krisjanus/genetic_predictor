@@ -4,6 +4,10 @@
 Created on Wed Sep 26 06:23:15 2018
 
 @author: krisjan
+todo:
+    1. pass in percentage of population to generate via clustering and max amount of clusters - 
+        too many overfits
+    2. general note: limit min and max cubes to lower number - also to avoid overfitting
 """
 
 import os
@@ -39,7 +43,7 @@ X_train, X_test, y_train, y_test = train_test_split(df.drop(['label'],axis=1),
 tic_toc.tic()
 size = len(X_train)
 # titanic does well with norm 1
-best_part = gen_part.train(X_train, y_train, 30, 7, prob_mutate = .05, 
+best_part = gen_part.train(X_train, y_train, 50, 10, prob_mutate = .05, 
                            mutate_strength = .3, survival_rate = .1, 
                            alien_rate = .1, min_cubes = 20,
                            max_cubes = floor(size/10), metric = 'acc', validation=.2,
