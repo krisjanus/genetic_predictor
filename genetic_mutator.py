@@ -49,7 +49,7 @@ def gen_pop(X_train, bounds, pop_size, min_cubes, max_cubes, prefix='ind'):
         name = prefix + str(i)
         # random choice to generate random partition or cluster centroids
         # could become a parameter
-        if random.random() >= .7:
+        if random.random() >= .1:
             pop[name] = gen_cube_centres(X_train, bounds, min_cubes, max_cubes)
         else:
             pop[name] = gen_cluster_centres(X_train)
