@@ -43,11 +43,12 @@ X_train, X_test, y_train, y_test = train_test_split(df.drop(['label'],axis=1),
 tic_toc.tic()
 size = len(X_train)
 # titanic does well with norm 1
-best_part = gen_part.train(X_train, y_train, 50, 10, prob_mutate = .05, 
+# if validation is an integer cross validation is performed and perc_cluster is set to 0
+best_part = gen_part.train(X_train, y_train, 20, 3, prob_mutate = .05, 
                            mutate_strength = .3, survival_rate = .1, 
                            alien_rate = .1, min_cubes = 20,
-                           max_cubes = floor(size/10), metric = 'acc', validation=.2,
-                           seed=7, part_norm=1)
+                           max_cubes = floor(size/10), metric = 'acc', validation=5,
+                           seed=7, part_norm=1, perc_cluster=.3)
 tic_toc.toc()
 #%% evaluate best predictor
 from sklearn.metrics import roc_curve, accuracy_score

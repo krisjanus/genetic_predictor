@@ -42,18 +42,21 @@ def gen_cluster_centres(df):
     centres.columns = pd.Series(centres.columns).apply(lambda x:'cube_' + str(x))      
     return centres    
 
-def gen_pop(X_train, bounds, pop_size, min_cubes, max_cubes, prefix='ind'):
+def gen_pop(X_train, bounds, pop_size, min_cubes, max_cubes, perc_cluster=0, prefix='ind'):
     pop = pd.Series()
     print('generating individuals')
+    clust_cnt = 0
     for i in range(pop_size):
         name = prefix + str(i)
         # random choice to generate random partition or cluster centroids
         # could become a parameter
-        if random.random() >= .3:
+        if random.random() >= perc_cluster:
             pop[name] = gen_cube_centres(X_train, bounds, min_cubes, max_cubes)
         else:
             pop[name] = gen_cluster_centres(X_train)
+            clust_cnt += 1
         pbar.updt(pop_size,i+1)
+    print(clust_cnt,'cluster individuals')
     return pop
 
 def gen_cube_centres(df, bounds, min_cubes, max_cubes):
@@ -166,7 +169,7 @@ def breed_centroid(surv_series, df_scores, nr_children_limit):
     return breed_series
 
 def new_gen(population, df_train, df_scores, survival_rate, alien_rate, pop_size, prob_mutate, 
-          mutate_strength, bounds, iter_nr, min_cubes, max_cubes, keep_originals):
+          mutate_strength, bounds, iter_nr, min_cubes, max_cubes, keep_originals, perc_cluster=0):
     df_scores.sort_values(ascending = False,inplace=True)
     nr_surv = ceil(survival_rate * pop_size)
     survivors = population[list(df_scores[:nr_surv].index)]
@@ -175,7 +178,8 @@ def new_gen(population, df_train, df_scores, survival_rate, alien_rate, pop_size
     surv_mut, df_report = mutate(surv_breed, df_train.dtypes, bounds, probability=prob_mutate,
                           strength = mutate_strength, keep_originals=keep_originals)
     alien_name = 'gen_'+str(iter_nr)+'_ind_'
-    aliens = gen_pop(df_train, bounds, nr_aliens, min_cubes, max_cubes, alien_name)
+    aliens = gen_pop(df_train, bounds, nr_aliens, min_cubes, max_cubes, 
+                     perc_cluster = perc_cluster, prefix = alien_name)
     df_new_gen = pd.concat([surv_mut, aliens])
     print(df_report)
     return df_new_gen, nr_surv    

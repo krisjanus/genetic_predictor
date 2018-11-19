@@ -33,7 +33,7 @@ def auc_score(individual, X_test, y_test):
 def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05, 
           mutate_strength = .3, survival_rate = .1, alien_rate = .1,
           min_cubes = 2, max_cubes = 20, metric='info_gain', validation=0, 
-          seed=None, part_norm=2):
+          seed=None, part_norm=2, perc_cluster=0):
     
     #get bounds of each column
     bounds = X_train.apply(get_bounds, axis=0).apply(pd.Series)
@@ -41,55 +41,87 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
     
     # define a validation set - best to have this as information gain on its own
     # can be misleading
+    x_val_rounds = 1
     if validation == 0:
-        X_train = X_train
-        y_train = y_train
+        train_test_idx = [(X_train.index, None)]
         X_test = None
         y_test = None
+        
     elif validation < 1:
-        X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, 
+        df_train, X_test, train_labels, y_test = train_test_split(X_train, y_train, 
                                                     test_size=validation,
                                                     random_state=seed)
+        train_test_idx = [(train_labels.index, y_test.index)]
+        
     # provision for cross validation
     else:
+        x_val_rounds = validation
         skf = StratifiedKFold(n_splits=validation)
-        train_test_idx = [(x,y) for x,y in skf.split(X_train, y_train)]
+        train_test_idx = [(y_train.iloc[x].index, y_train.iloc[y].index) 
+                            for x,y in skf.split(X_train, y_train)]
+        perc_cluster = 0
     
+    df_scores = pd.DataFrame()
     #generate a population of partitions
-    pop_parts = gen_mut.gen_pop(X_train, bounds, pop_size, min_cubes, max_cubes)
-    # initialize the partition classifier class
-    pop = pop_parts.apply(lambda x: gpt.partition_classifier(x, part_norm))
+    pop_parts = gen_mut.gen_pop(X_train, bounds, pop_size, min_cubes, max_cubes,
+                                perc_cluster = perc_cluster)
     
-    # fit data and evaluate performance for each individual
-    print('Colonizing data')
-    pop.apply(lambda x: x.colonize(X_train, y_train, X_test, y_test))
-    
-    if (validation > 0) and (metric == 'auc'):
-        df_scores = pop.apply(lambda x: x.auc)
-    elif (validation > 0) and (metric == 'acc'):
-        df_scores = pop.apply(lambda x: x.acc)
-    else:
-        df_scores = pop.apply(lambda x: x.info_gain)
+    for enum, (train_index, test_index) in enumerate(train_test_idx):
+        if x_val_rounds > 1: print('Cross validation round',enum+1)
         
+        # initialize the partition classifier class
+        pop = pop_parts.apply(lambda x: gpt.partition_classifier(x, part_norm))
+        
+        # fit data and evaluate performance for each individual
+        print('Colonizing data')
+        X_tr = X_train.loc[train_index,:]
+        y_tr = y_train.loc[train_index]
+        if test_index is not None:
+            X_test = X_train.loc[test_index,:]
+            y_test = y_train.loc[test_index]
+        
+        pop.apply(lambda x: x.colonize(X_tr, y_tr, X_test, y_test))
+        
+        if (validation > 0) and (metric == 'auc'):
+            df_scores[enum] = pop.apply(lambda x: x.auc)
+        elif (validation > 0) and (metric == 'acc'):
+            df_scores[enum] = pop.apply(lambda x: x.acc)
+        else:
+            df_scores[enum] = pop.apply(lambda x: x.info_gain)
+    
+    df_scores = df_scores.mean(axis = 1)
     df_scores.sort_values(ascending = False, inplace=True)
     print('best:', df_scores[:1])
     pop = pop[df_scores.index]
     for i in range(gen_size-1):
         print('generation', i+1)
+        
         pop_parts, nr_surv = gen_mut.new_gen(pop_parts, X_train, df_scores, survival_rate, alien_rate, 
-                      pop_size, prob_mutate, mutate_strength, bounds, i+1, min_cubes,
-                      max_cubes, keep_originals=False)
-        pop_new = pop_parts.apply(lambda x: gpt.partition_classifier(x, part_norm))
-        pop_new.apply(lambda x: x.colonize(X_train, y_train, X_test, y_test))
-        for ind in pop[:nr_surv].index:
-            pop_new[ind] = pop[ind]
-        if (validation>0) and (metric == 'auc'):
-            df_scores = pop_new.apply(lambda x: x.auc)
-        elif (validation > 0) and (metric == 'acc'):
-            df_scores = pop_new.apply(lambda x: x.acc)
-        else:
-            df_scores = pop_new.apply(lambda x: x.info_gain)
-#        df_scores = pop_new.apply(lambda x: x.info_gain)
+                          pop_size, prob_mutate, mutate_strength, bounds, i+1, min_cubes,
+                          max_cubes, keep_originals=False, perc_cluster = perc_cluster)
+        
+        df_scores = pd.DataFrame()
+        
+        for enum, (train_index, test_index) in enumerate(train_test_idx):
+            if x_val_rounds > 1: print('Cross validation round',enum+1)
+            
+            pop_new = pop_parts.apply(lambda x: gpt.partition_classifier(x, part_norm))
+            X_tr = X_train.loc[train_index,:]
+            y_tr = y_train.loc[train_index]
+            if test_index is not None:
+                X_test = X_train.loc[test_index,:]
+                y_test = y_train.loc[test_index]
+                
+            pop_new.apply(lambda x: x.colonize(X_tr, y_tr, X_test, y_test))
+            for ind in pop[:nr_surv].index:
+                pop_new[ind] = pop[ind]
+            if (validation>0) and (metric == 'auc'):
+                df_scores[enum] = pop_new.apply(lambda x: x.auc)
+            elif (validation > 0) and (metric == 'acc'):
+                df_scores[enum] = pop_new.apply(lambda x: x.acc)
+            else:
+                df_scores[enum] = pop_new.apply(lambda x: x.info_gain)
+        df_scores = df_scores.mean(axis = 1)
         df_scores.sort_values(ascending = False, inplace=True)
         print('best:', df_scores[:1])
         pop = pop_new[df_scores.index]
