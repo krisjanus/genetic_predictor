@@ -37,7 +37,7 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
     
     #get bounds of each column
     bounds = X_train.apply(get_bounds, axis=0).apply(pd.Series)
-    bounds.rename(index=str, columns={0:'lower',1:'upper'}, inplace=True)
+    bounds.rename(columns={0:'lower',1:'upper'}, inplace=True)
     
     # define a validation set - best to have this as information gain on its own
     # can be misleading
