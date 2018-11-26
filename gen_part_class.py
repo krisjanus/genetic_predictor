@@ -52,6 +52,7 @@ class partition_classifier():
                     self.acc = acc
                     self.acc_thres = threshold
             print(' auc:',self.auc,'\nacc:',self.acc)
+        return self
     
     def predict(self, X_test):
         # assign each data point to a cell

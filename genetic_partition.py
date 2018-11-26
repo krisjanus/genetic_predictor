@@ -12,6 +12,8 @@ import genetic_mutator as gen_mut
 import gen_part_class as gpt
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split, StratifiedKFold
+from multiprocessing import Pool
+from functools import partial
 
 def get_bounds(column):
     upper = column.max()
@@ -33,7 +35,7 @@ def auc_score(individual, X_test, y_test):
 def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05, 
           mutate_strength = .3, survival_rate = .1, alien_rate = .1,
           min_cubes = 2, max_cubes = 20, metric='info_gain', validation=0, 
-          seed=None, part_norm=2, perc_cluster=0):
+          seed=None, part_norm=2, perc_cluster=0, jobs=None):
     
     #get bounds of each column
     bounds = X_train.apply(get_bounds, axis=0).apply(pd.Series)
@@ -80,7 +82,15 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
             X_test = X_train.loc[test_index,:]
             y_test = y_train.loc[test_index]
         
-        pop.apply(lambda x: x.colonize(X_tr, y_tr, X_test, y_test))
+        if jobs is None:
+            pop.apply(lambda x: x.colonize(X_tr, y_tr, X_test, y_test))
+        else:
+            col_part = partial(gpt.partition_classifier.colonize, X_train=X_tr, 
+                               y_train=y_tr, X_test=X_test, y_test=y_test)
+            pool = Pool(processes=jobs)
+
+            for i,x in enumerate(pool.imap_unordered(col_part, pop)):
+                pop.iloc[i]=x
         
         if (validation > 0) and (metric == 'auc'):
             df_scores[enum] = pop.apply(lambda x: x.auc)

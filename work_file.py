@@ -9,7 +9,9 @@ Created on Wed Sep 26 06:23:15 2018
 """
 
 import os
-os.chdir('/Users/krisjan/repos/genetic_predictor')
+#linux dir_name = '/home/krisjan/genetic_predictor'
+#mac dir_name = '/Users/krisjan/repos/genetic_predictor'
+os.chdir(dir_name)
 #%%
 import pandas as pd
 import numpy as np
@@ -46,7 +48,7 @@ best_part = gen_part.train(df.drop(['Survived'],axis=1), df['Survived'], 100, 10
                            mutate_strength = .3, survival_rate = .1, 
                            alien_rate = .1, min_cubes = 20,
                            max_cubes = floor(size/10), metric = 'acc', validation=5,
-                           seed=7, part_norm=1, perc_cluster=.3)
+                           seed=7, part_norm=1, perc_cluster=.3, jobs=8)
 tic_toc.toc()
 #%% evaluate best predictor
 from sklearn.metrics import roc_curve, accuracy_score
