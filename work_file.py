@@ -44,11 +44,11 @@ tic_toc.tic()
 size = len(X_train)
 # titanic does well with norm 1
 # if validation is an integer cross validation is performed and perc_cluster is set to 0
-best_part = gen_part.train(df.drop(['Survived'],axis=1), df['Survived'], 100, 10, prob_mutate = .05, 
+best_part = gen_part.train(df.drop(['Survived'],axis=1), df['Survived'], 30, 3, prob_mutate = .05, 
                            mutate_strength = .3, survival_rate = .1, 
                            alien_rate = .1, min_cubes = 20,
                            max_cubes = floor(size/10), metric = 'acc', validation=5,
-                           seed=7, part_norm=1, perc_cluster=.3, jobs=8)
+                           seed=7, part_norm=1, perc_cluster=.3, jobs=3)
 tic_toc.toc()
 #%% evaluate best predictor
 from sklearn.metrics import roc_curve, accuracy_score

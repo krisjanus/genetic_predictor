@@ -14,6 +14,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from multiprocessing import Pool
 from functools import partial
+import pbar
 
 def get_bounds(column):
     upper = column.max()
@@ -30,6 +31,10 @@ def auc_score(individual, X_test, y_test):
     df_true_test = y_test.sort_index().copy()
     
     return roc_auc_score(df_true_test, df_prediction)
+
+def colonize_ind(ind, X_train, y_train, X_test=None, y_test=None):
+    ind.colonize(X_train, y_train, X_test, y_test)
+    return ind
 
 # main function that performs training, and selects best predictor
 def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05, 
@@ -85,12 +90,16 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
         if jobs is None:
             pop.apply(lambda x: x.colonize(X_tr, y_tr, X_test, y_test))
         else:
-            col_part = partial(gpt.partition_classifier.colonize, X_train=X_tr, 
+            col_part = partial(colonize_ind, X_train=X_tr, 
                                y_train=y_tr, X_test=X_test, y_test=y_test)
+            
             pool = Pool(processes=jobs)
 
-            for i,x in enumerate(pool.imap_unordered(col_part, pop)):
+            for i,x in enumerate(pool.imap(col_part, pop)):
                 pop.iloc[i]=x
+                pbar.updt(len(pop),i)
+                
+            pool.close()
         
         if (validation > 0) and (metric == 'auc'):
             df_scores[enum] = pop.apply(lambda x: x.auc)
@@ -122,7 +131,20 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
                 X_test = X_train.loc[test_index,:]
                 y_test = y_train.loc[test_index]
                 
-            pop_new.apply(lambda x: x.colonize(X_tr, y_tr, X_test, y_test))
+            if jobs is None:
+                pop_new.apply(lambda x: x.colonize(X_tr, y_tr, X_test, y_test))
+            else:
+                col_part = partial(colonize_ind, X_train=X_tr, 
+                       y_train=y_tr, X_test=X_test, y_test=y_test)
+                
+                pool = Pool(processes=jobs)
+    
+                for i,x in enumerate(pool.imap(col_part, pop_new)):
+                    pop_new.iloc[i]=x
+                    pbar.updt(len(pop_new),i)
+                    
+                pool.close()
+                
             for ind in pop[:nr_surv].index:
                 pop_new[ind] = pop[ind]
             if (validation>0) and (metric == 'auc'):

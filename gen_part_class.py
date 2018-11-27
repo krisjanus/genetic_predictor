@@ -37,7 +37,7 @@ class partition_classifier():
         self.probs_in_cube = part_eval.cube_prob(self.vectors_in_cubes, self.y_train)
         # calculate the information gain for partition
         self.info_gain = part_eval.info_gain(self.vectors_in_cubes, self.y_train)
-        print('\ninformation gain:',self.info_gain)
+#        print('\ninformation gain:',self.info_gain)
         # if a test set is present evaluate further metrics, so far only auc
         if (self.X_test is not None):
             df_prediction = self.predict(self.X_test)
@@ -51,8 +51,8 @@ class partition_classifier():
                 if acc > self.acc:
                     self.acc = acc
                     self.acc_thres = threshold
-            print(' auc:',self.auc,'\nacc:',self.acc)
-        return self
+#            print(' auc:',self.auc,'\nacc:',self.acc)
+#        return self
     
     def predict(self, X_test):
         # assign each data point to a cell
