@@ -12,6 +12,9 @@ import genetic_mutator as gen_mut
 import gen_part_class as gpt
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import train_test_split, StratifiedKFold
+from multiprocessing import Pool
+from functools import partial
+import pbar
 
 def get_bounds(column):
     upper = column.max()
@@ -29,15 +32,24 @@ def auc_score(individual, X_test, y_test):
     
     return roc_auc_score(df_true_test, df_prediction)
 
+def colonize_ind(ind, X_train, y_train, X_test=None, y_test=None):
+    ind.colonize(X_train, y_train, X_test, y_test)
+    return ind
+
+def prune_ind(ind, min_rows_in_cube):
+    ind.prune_cubes(min_rows_in_cube)
+    return ind
+
 # main function that performs training, and selects best predictor
 def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05, 
           mutate_strength = .3, survival_rate = .1, alien_rate = .1,
-          min_cubes = 2, max_cubes = 20, metric='info_gain', validation=0, 
-          seed=None, part_norm=2, perc_cluster=0):
+          min_cubes = 2, max_cubes = 20, min_rows_in_cube = 3, 
+          metric='info_gain', validation=0, 
+          seed=None, part_norm=2, perc_cluster=0, jobs=None):
     
     #get bounds of each column
     bounds = X_train.apply(get_bounds, axis=0).apply(pd.Series)
-    bounds.rename(index=str, columns={0:'lower',1:'upper'}, inplace=True)
+    bounds.rename(columns={0:'lower',1:'upper'}, inplace=True)
     
     # define a validation set - best to have this as information gain on its own
     # can be misleading
@@ -80,8 +92,29 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
             X_test = X_train.loc[test_index,:]
             y_test = y_train.loc[test_index]
         
-        pop.apply(lambda x: x.colonize(X_tr, y_tr, X_test, y_test))
-        
+        if jobs is None:
+            pop.apply(lambda x: x.colonize(X_tr, y_tr, X_test, y_test))
+            print('Pruning')
+            pop.apply(lambda x: x.prune_cubes(min_rows_in_cube))
+        else:
+            col_part = partial(colonize_ind, X_train=X_tr, 
+                               y_train=y_tr, X_test=X_test, y_test=y_test)
+            
+#            prune_part = partial(prune_ind, min_rows_in_cube=min_rows_in_cube)
+            
+            pool = Pool(processes=jobs)
+
+            for i,x in enumerate(pool.imap(col_part, pop)):
+                pop.iloc[i]=x
+                pbar.updt(len(pop),i)
+            print('Pruning')
+#            for i,x in enumerate(pool.imap(prune_part, pop)):
+#                pop.iloc[i]=x
+#                pbar.updt(len(pop),i)
+                
+            pool.close()
+            pop.apply(lambda x: x.prune_cubes(min_rows_in_cube))
+            
         if (validation > 0) and (metric == 'auc'):
             df_scores[enum] = pop.apply(lambda x: x.auc)
         elif (validation > 0) and (metric == 'acc'):
@@ -112,7 +145,30 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
                 X_test = X_train.loc[test_index,:]
                 y_test = y_train.loc[test_index]
                 
-            pop_new.apply(lambda x: x.colonize(X_tr, y_tr, X_test, y_test))
+            if jobs is None:
+                pop_new.apply(lambda x: x.colonize(X_tr, y_tr, X_test, y_test))
+                pop_new.apply(lambda x: x.prune_cubes(min_rows_in_cube))
+            else:
+                col_part = partial(colonize_ind, X_train=X_tr, 
+                                   y_train=y_tr, X_test=X_test, y_test=y_test)
+                
+#                prune_part = partial(prune_ind, min_rows_in_cube=min_rows_in_cube)
+                
+                pool = Pool(processes=jobs)
+    
+                for i,x in enumerate(pool.imap(col_part, pop_new)):
+                    pop_new.iloc[i]=x
+                    pbar.updt(len(pop_new),i)
+                
+                print('Pruning')
+#                for i,x in enumerate(pool.imap(prune_part, pop_new)):
+#                    pop_new.iloc[i]=x
+#                    pbar.updt(len(pop_new),i)    
+                
+                pool.close()
+                
+                pop_new.apply(lambda x: x.prune_cubes(min_rows_in_cube))
+                
             for ind in pop[:nr_surv].index:
                 pop_new[ind] = pop[ind]
             if (validation>0) and (metric == 'auc'):

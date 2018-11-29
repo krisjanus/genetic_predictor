@@ -4,14 +4,16 @@
 Created on Wed Sep 26 06:23:15 2018
 
 @author: krisjan
-todo:
-    1. pass in percentage of population to generate via clustering and max amount of clusters - 
-        too many overfits
+
     2. general note: limit min and max cubes to lower number - also to avoid overfitting
 """
 
 import os
-os.chdir('/Users/krisjan/repos/genetic_predictor')
+#linux 
+#dir_name = '/home/krisjan/genetic_predictor'
+#mac 
+#dir_name = '/Users/krisjan/repos/genetic_predictor'
+os.chdir(dir_name)
 #%%
 import pandas as pd
 import numpy as np
@@ -44,11 +46,10 @@ tic_toc.tic()
 size = len(X_train)
 # titanic does well with norm 1
 # if validation is an integer cross validation is performed and perc_cluster is set to 0
-best_part = gen_part.train(df.drop(['Survived'],axis=1), df['Survived'], 100, 10, prob_mutate = .05, 
-                           mutate_strength = .3, survival_rate = .1, 
-                           alien_rate = .1, min_cubes = 20,
-                           max_cubes = floor(size/10), metric = 'acc', validation=5,
-                           seed=7, part_norm=1, perc_cluster=.3)
+best_part = gen_part.train(df.drop(['Survived'],axis=1), df['Survived'], 20, 3, prob_mutate = .05, 
+                           mutate_strength = .3, survival_rate = .1, alien_rate = .1, min_cubes = 20,
+                           max_cubes = floor(size/10), min_rows_in_cube = 3, metric = 'acc', validation=5,
+                           seed=7, part_norm=1, perc_cluster=.3, jobs=8)
 tic_toc.toc()
 #%% evaluate best predictor
 from sklearn.metrics import roc_curve, accuracy_score
@@ -83,10 +84,10 @@ plt.show()
 # probabilities per cell. is working with acc you then just need to also find the
 # threshold associated with best acc
 best_part.colonize(df.drop(['Survived'],axis=1),df['Survived'])
-best_part.save('data/titanic_181120.h5')
+best_part.save('data/titanic_181127.h5')
 
 estimator = gpt.partition_classifier()
-estimator.load(filename = 'data/titanic_181116.h5')
+estimator.load(filename = 'data/titanic_181120.h5')
 df_prediction = estimator.predict(X_test)
 
 
@@ -107,11 +108,43 @@ surv_breed = gen_mut.breed(survivors, df_scores[:5],35)
 surv_mut, df_breed_report = gen_mut.mutate(surv_breed, X_train.dtypes, bounds, probability=.05,
                           strength = .2, keep_originals=False)
 #%% titanic predict on test
+#%% thershold optimisation
+
+best_acc_list = []
+best_thr_list = []
+for i in range(500):
+    X_train, X_test, y_train, y_test = train_test_split(df.drop(['Survived'],axis=1), 
+                                                        df['Survived'], 
+                                                        test_size=.2)
+    estimator.colonize(X_train, y_train)
+    df_prediction = estimator.predict(X_test)
+    df_prediction.sort_index(inplace=True)
+    df_true_test = y_test.sort_index().copy()
+    
+    best_acc = 0
+    best_tr = 0
+    for threshold in np.arange(0,1.01,.01):
+        acc = accuracy_score(df_true_test, df_prediction>threshold)
+        if acc > best_acc:
+            best_acc = acc
+            best_tr = threshold 
+    
+    best_acc_list.append(best_acc)
+    best_thr_list.append(best_tr)
+#%%
+np.mean(best_acc_list)
+np.mean(best_thr_list)  
+pd.Series(best_thr_list).hist()  
+pd.Series(best_thr_list).mode()    
+pd.Series(best_acc_list).hist()
+#%% train again on full set
+estimator.colonize(df.drop(['Survived'],axis=1),df['Survived'])
+
 #%% titanic
 df_test = pd.read_csv('data/titanic_test_prepd.csv')
 df_test = df_test.set_index('PassengerId')
 df_test.drop(['ticket_numbers'],axis=1,inplace=True)
 df_probs = estimator.predict(df_test)
-df_out = (df_probs > .35).astype(int)
+df_out = (df_probs > .23).astype(int)
 df_out = pd.DataFrame(df_out, columns=['Survived'])
-df_out.to_csv('data/titanic_prediction_181120.csv')
+df_out.to_csv('data/titanic_prediction_181127.csv')
