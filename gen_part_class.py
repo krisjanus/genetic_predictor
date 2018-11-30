@@ -22,39 +22,40 @@ class partition_classifier():
         self.part_norm = part_norm
                
     # fit data to the partition and evaluate fitness
-    def colonize(self, X_train, y_train, X_test=None, y_test=None):
+    def colonize(self, X_train, y_train):
         self.X_train = X_train
         self.y_train = y_train
-        self.X_test = X_test
-        self.y_test = y_test
+        
         # Series object containing lists of training data indices,
         # indicating which rows of training data are contained in each cell
         self.vectors_in_cubes = part_eval.get_containers(self.X_train, self.part, self.part_norm)
-        # delete cells that contain no data
-        self.part = self.part.loc[:,self.vectors_in_cubes.index].copy()
         # fraction of positive labels in each cell -  
         # assigns a probability score to each cell
         self.probs_in_cube = part_eval.cube_prob(self.vectors_in_cubes, self.y_train)
         # calculate the information gain for partition
         self.info_gain = part_eval.info_gain(self.vectors_in_cubes, self.y_train)
 #        print('\ninformation gain:',self.info_gain)
+        
+    def evaluate(self, X_test, y_test):
         # if a test set is present evaluate further metrics, so far only auc
-        if (self.X_test is not None):
-            df_prediction = self.predict(self.X_test)
-            df_prediction.sort_index(inplace=True)
-            df_true_test = self.y_test.sort_index().copy()
-            self.auc = roc_auc_score(df_true_test, df_prediction)
-            self.acc = 0
-            self.acc_thres = 0
-            for threshold in np.arange(0,1.01,.01):
-                acc = accuracy_score(df_true_test, df_prediction>threshold)
-                if acc > self.acc:
-                    self.acc = acc
-                    self.acc_thres = threshold
-#            print(' auc:',self.auc,'\nacc:',self.acc)
-#        return self
+        self.X_test = X_test
+        self.y_test = y_test
+        df_prediction = self.predict(self.X_test)
+        df_prediction.sort_index(inplace=True)
+        df_true_test = self.y_test.sort_index().copy()
+        self.auc = roc_auc_score(df_true_test, df_prediction)
+        self.acc = 0
+        self.acc_thres = 0
+        for threshold in np.arange(0,1.01,.01):
+            acc = accuracy_score(df_true_test, df_prediction>threshold)
+            if acc > self.acc:
+                self.acc = acc
+                self.acc_thres = threshold
+
 
     def prune_cubes(self, min_rows_in_cube):
+        # first delete cells that contain no data
+        self.part = self.part.loc[:,self.vectors_in_cubes.index].copy()
         new_vic = self.vectors_in_cubes.copy()
         for centroid, df_row_list in self.vectors_in_cubes.iteritems():
             if len(df_row_list) < 3:

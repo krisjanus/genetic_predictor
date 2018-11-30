@@ -32,8 +32,8 @@ def auc_score(individual, X_test, y_test):
     
     return roc_auc_score(df_true_test, df_prediction)
 
-def colonize_ind(ind, X_train, y_train, X_test=None, y_test=None):
-    ind.colonize(X_train, y_train, X_test, y_test)
+def colonize_ind(ind, X_train, y_train):
+    ind.colonize(X_train, y_train)
     return ind
 
 def prune_ind(ind, min_rows_in_cube):
@@ -71,7 +71,7 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
         skf = StratifiedKFold(n_splits=validation)
         train_test_idx = [(y_train.iloc[x].index, y_train.iloc[y].index) 
                             for x,y in skf.split(X_train, y_train)]
-        perc_cluster = 0
+#        perc_cluster = 0
     
     df_scores = pd.DataFrame()
     #generate a population of partitions
@@ -93,12 +93,11 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
             y_test = y_train.loc[test_index]
         
         if jobs is None:
-            pop.apply(lambda x: x.colonize(X_tr, y_tr, X_test, y_test))
+            pop.apply(lambda x: x.colonize(X_tr, y_tr))
             print('Pruning')
             pop.apply(lambda x: x.prune_cubes(min_rows_in_cube))
         else:
-            col_part = partial(colonize_ind, X_train=X_tr, 
-                               y_train=y_tr, X_test=X_test, y_test=y_test)
+            col_part = partial(colonize_ind, X_train=X_tr, y_train=y_tr)
             
 #            prune_part = partial(prune_ind, min_rows_in_cube=min_rows_in_cube)
             
@@ -116,8 +115,10 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
             pop.apply(lambda x: x.prune_cubes(min_rows_in_cube))
             
         if (validation > 0) and (metric == 'auc'):
+            pop.apply(lambda x: x.evaluate(X_test, y_test))
             df_scores[enum] = pop.apply(lambda x: x.auc)
         elif (validation > 0) and (metric == 'acc'):
+            pop.apply(lambda x: x.evaluate(X_test, y_test))
             df_scores[enum] = pop.apply(lambda x: x.acc)
         else:
             df_scores[enum] = pop.apply(lambda x: x.info_gain)
@@ -147,11 +148,10 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
                 y_test = y_train.loc[test_index]
                 
             if jobs is None:
-                pop_new.apply(lambda x: x.colonize(X_tr, y_tr, X_test, y_test))
+                pop_new.apply(lambda x: x.colonize(X_tr, y_tr))
                 pop_new.apply(lambda x: x.prune_cubes(min_rows_in_cube))
             else:
-                col_part = partial(colonize_ind, X_train=X_tr, 
-                                   y_train=y_tr, X_test=X_test, y_test=y_test)
+                col_part = partial(colonize_ind, X_train=X_tr, y_train=y_tr)
                 
 #                prune_part = partial(prune_ind, min_rows_in_cube=min_rows_in_cube)
                 
@@ -173,8 +173,10 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
             for ind in pop[:nr_surv].index:
                 pop_new[ind] = pop[ind]
             if (validation>0) and (metric == 'auc'):
+                pop_new.apply(lambda x: x.evaluate(X_test, y_test))
                 df_scores[enum] = pop_new.apply(lambda x: x.auc)
             elif (validation > 0) and (metric == 'acc'):
+                pop_new.apply(lambda x: x.evaluate(X_test, y_test))
                 df_scores[enum] = pop_new.apply(lambda x: x.acc)
             else:
                 df_scores[enum] = pop_new.apply(lambda x: x.info_gain)
