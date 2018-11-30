@@ -54,7 +54,7 @@ def gen_pop(X_train, bounds, pop_size, min_cubes, max_cubes, perc_cluster=0, pre
             pop[name] = gen_cube_centres(X_train, bounds, min_cubes, max_cubes)
         else:
             pop[name] = gen_cluster_centres(X_train)
-            clust_cnt += 1
+            clust_cnt = clust_cnt + 1
         pbar.updt(pop_size,i+1)
     print(clust_cnt,'cluster individuals')
     return pop
