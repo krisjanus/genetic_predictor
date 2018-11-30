@@ -7,14 +7,16 @@ Created on Mon Nov 26 06:13:15 2018
 """
 
 import os
-os.chdir('/Users/krisjan/repos/genetic_predictor')
+#linux dir_name = '/home/krisjan/genetic_predictor'
+#mac dir_name = '/Users/krisjan/repos/genetic_predictor'
+os.chdir(dir_name)
 #%%
 import pandas as pd
 import numpy as np
 import genetic_partition as gen_part
 import genetic_mutator as gen_mut
 import partition_evaluator as part_eval
-#%% developing cube melter/pruning
+#%% developing cube melter/pruning: prepare test individual
 bounds = X_train.apply(gen_part.get_bounds, axis=0).apply(pd.Series)
 bounds.rename(columns={0:'lower',1:'upper'}, inplace=True)
 test_ind = gen_mut.gen_cube_centres(X_train, bounds, len(X_train), len(X_train)*2)
@@ -22,6 +24,7 @@ vectors_in_cubes = part_eval.get_containers(X_train, test_ind, 1)
 # delete cells that contain no data
 test_ind = test_ind.loc[:,vectors_in_cubes.index].copy()
 
+#%% developing cube melter/pruning: the function
 new_vic = vectors_in_cubes.copy()
 for centroid, df_row_list in vectors_in_cubes.iteritems():
     if len(df_row_list) < 3:
@@ -36,3 +39,12 @@ for centroid, df_row_list in vectors_in_cubes.iteritems():
         df_rows_in_cube = df_row_cube.groupby('cube')['row'].apply(list)
         for new_centroid, row_list in df_rows_in_cube.iteritems():
             new_vic[new_centroid] = new_vic[new_centroid] + row_list
+#%% test in class structure
+import gen_part_class as gpt
+#%%
+test_ind = gpt.partition_classifier(test_ind, 1)
+test_ind.colonize(X_train, y_train, X_test, y_test)
+test_ind.vectors_in_cubes
+test_ind.prune_cubes(3)
+len(test_ind.vectors_in_cubes)
+test_ind.part
