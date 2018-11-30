@@ -40,7 +40,7 @@ def colonize_ind(ind, X_train, y_train, X_test=None, y_test=None):
 def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05, 
           mutate_strength = .3, survival_rate = .1, alien_rate = .1,
           min_cubes = 2, max_cubes = 20, metric='info_gain', validation=0, 
-          seed=None, part_norm=2, perc_cluster=0, jobs=None):
+          seed=None, part_norm=1, perc_cluster=0, jobs=None):
     
     #get bounds of each column
     bounds = X_train.apply(get_bounds, axis=0).apply(pd.Series)

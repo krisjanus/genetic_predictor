@@ -14,7 +14,7 @@ import numpy as np
 
 # class defining one partition classifier object
 class partition_classifier():
-    def __init__(self, df_partition = None, part_norm=2):
+    def __init__(self, df_partition = None, part_norm=1):
         # partition dataframe is a collection of cell centroids
         if df_partition is not None:
             self.part = df_partition.astype('float')
