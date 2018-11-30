@@ -168,8 +168,8 @@ def breed_centroid(surv_series, df_scores, nr_children_limit):
         new_ind_2 = surv_series[index_2].iloc[:,:split_point].merge( 
                                surv_series[index_1].iloc[:,split_point:cell_len],
                                left_index=True, right_index=True)
-        new_ind_1.columns = ['cube_'+ str(x) for x in new_ind_1.columns]
-        new_ind_2.columns = ['cube_'+ str(x) for x in new_ind_2.columns]
+        new_ind_1.columns = ['cube_'+ str(x) for x in range(len(new_ind_1.columns))]
+        new_ind_2.columns = ['cube_'+ str(x) for x in range(len(new_ind_2.columns))]
         name_1 = index_1 + '_' + index_2
         name_2 = index_2 + '_' + index_1
         breed_series[name_1] = new_ind_1
