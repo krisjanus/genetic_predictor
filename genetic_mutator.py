@@ -14,6 +14,7 @@ import random
 import pbar
 from math import floor, ceil
 from sklearn.cluster import KMeans
+import sys
 #%%
 def gen_part(df, bounds):
     part = pd.Series()
@@ -54,7 +55,7 @@ def gen_pop(X_train, bounds, pop_size, min_cubes, max_cubes, perc_cluster=0, pre
             pop[name] = gen_cube_centres(X_train, bounds, min_cubes, max_cubes)
         else:
             pop[name] = gen_cluster_centres(X_train)
-            clust_cnt += 1
+            clust_cnt = clust_cnt + 1
         pbar.updt(pop_size,i+1)
     print(clust_cnt,'cluster individuals')
     return pop
@@ -98,7 +99,12 @@ def mutate(surv_series, df_dtypes, bounds, probability = .01, strength = .2, kee
             else:
                 new_col = surv_series[ind].loc[col,:]
             mutant.loc[col,:] = new_col
-            not_same_sum = not_same_sum + int(sum(mutant.loc[col,:] != surv_series[ind].loc[col,:]))
+            try:
+                not_same_sum = not_same_sum + int(sum(mutant.loc[col,:] != surv_series[ind].loc[col,:]))
+            except:
+                print(mutant.loc[col,:])
+                print(surv_series[ind].loc[col,:])
+                sys.exit(1)
             if not_same_sum > 0:
                 df_report.loc[ind,'variable'] = col
                 df_report.loc[(df_report['variable'] == col)&(df_report.index==ind),'change_count'] = not_same_sum
@@ -162,6 +168,8 @@ def breed_centroid(surv_series, df_scores, nr_children_limit):
         new_ind_2 = surv_series[index_2].iloc[:,:split_point].merge( 
                                surv_series[index_1].iloc[:,split_point:cell_len],
                                left_index=True, right_index=True)
+        new_ind_1.columns = ['cube_'+ str(x) for x in new_ind_1.columns]
+        new_ind_2.columns = ['cube_'+ str(x) for x in new_ind_2.columns]
         name_1 = index_1 + '_' + index_2
         name_2 = index_2 + '_' + index_1
         breed_series[name_1] = new_ind_1
