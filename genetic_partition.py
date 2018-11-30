@@ -107,7 +107,7 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
             for i,x in enumerate(pool.imap(col_part, pop)):
                 pop.iloc[i]=x
                 pbar.updt(len(pop),i)
-            print('Pruning')
+            print('\nPruning')
 #            for i,x in enumerate(pool.imap(prune_part, pop)):
 #                pop.iloc[i]=x
 #                pbar.updt(len(pop),i)
@@ -121,6 +121,7 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
             df_scores[enum] = pop.apply(lambda x: x.acc)
         else:
             df_scores[enum] = pop.apply(lambda x: x.info_gain)
+        if x_val_rounds > 1: print('Best score:', df_scores[enum].max())
     
     df_scores = df_scores.mean(axis = 1)
     df_scores.sort_values(ascending = False, inplace=True)
@@ -156,11 +157,11 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
                 
                 pool = Pool(processes=jobs)
     
-                for i,x in enumerate(pool.imap(col_part, pop_new)):
-                    pop_new.iloc[i]=x
-                    pbar.updt(len(pop_new),i)
+                for j,x in enumerate(pool.imap(col_part, pop_new)):
+                    pop_new.iloc[j]=x
+                    pbar.updt(len(pop_new),j)
                 
-                print('Pruning')
+                print('\nPruning')
 #                for i,x in enumerate(pool.imap(prune_part, pop_new)):
 #                    pop_new.iloc[i]=x
 #                    pbar.updt(len(pop_new),i)    
@@ -177,6 +178,7 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
                 df_scores[enum] = pop_new.apply(lambda x: x.acc)
             else:
                 df_scores[enum] = pop_new.apply(lambda x: x.info_gain)
+            if x_val_rounds > 1: print('Best score:', df_scores[enum].max())
         df_scores = df_scores.mean(axis = 1)
         df_scores.sort_values(ascending = False, inplace=True)
         print('best:', df_scores[:1])
