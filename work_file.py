@@ -46,10 +46,10 @@ tic_toc.tic()
 size = len(X_train)
 # titanic does well with norm 1
 # if validation is an integer cross validation is performed and perc_cluster is set to 0
-best_part = gen_part.train(df.drop(['Survived'],axis=1), df['Survived'], 500, 20, prob_mutate = .05, 
+best_part = gen_part.train(df.drop(['Survived'],axis=1), df['Survived'], 100, 3, prob_mutate = .05, 
                            mutate_strength = .3, survival_rate = .1, alien_rate = .1, min_cubes = 20,
                            min_rows_in_cube = 3, metric='acc', validation=5, 
-                           seed=7, part_norm=1, perc_cluster=.2, jobs=6)
+                           seed=None, part_norm=1, perc_cluster=.2, jobs=8)
 tic_toc.toc()
 #%% evaluate best predictor
 from sklearn.metrics import roc_curve, accuracy_score
@@ -84,7 +84,7 @@ plt.show()
 # probabilities per cell. is working with acc you then just need to also find the
 # threshold associated with best acc
 best_part.colonize(df.drop(['Survived'],axis=1),df['Survived'])
-best_part.save('data/titanic_181129b.h5')
+best_part.save('data/titanic_181201.h5')
 
 estimator = gpt.partition_classifier()
 estimator.load(filename = 'data/titanic_181129.h5')
@@ -147,7 +147,7 @@ df_test = pd.read_csv('data/titanic_test_prepd.csv')
 df_test = df_test.set_index('PassengerId')
 df_test.drop(['ticket_numbers'],axis=1,inplace=True)
 df_probs = estimator.predict(df_test)
-df_out = (df_probs > .42).astype(int)
+df_out = (df_probs > .67).astype(int)
 df_out.sum()/len(df_out)
 df_out = pd.DataFrame(df_out, columns=['Survived'])
-df_out.to_csv('data/titanic_prediction_181130b.csv')
+df_out.to_csv('data/titanic_prediction_181201c.csv')
