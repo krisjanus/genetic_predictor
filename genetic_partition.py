@@ -65,7 +65,6 @@ def train(X_train, y_train, pop_size, gen_size, prob_mutate = .05,
                                                     random_state=seed)
         train_test_idx = [(train_labels.index, y_test.index)]
         
-    # provision for cross validation
     else:
         x_val_rounds = validation
         skf = StratifiedKFold(n_splits=validation)
