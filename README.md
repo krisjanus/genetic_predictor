@@ -1,18 +1,20 @@
 # Genetic partition classifier
 
 Check out work_file.py for some code on how to use the classifier...
-Check out *genetic partitions classifier.pdf* for an instorduction to the ideas behind the code, and how they are implemented at a high level. The same text is repeated below...but the pdf will be more readable.
+Check out *genetic partitions classifier.pdf* for an introduction to the ideas behind the code, and how they are implemented at a high level. The same text is repeated below...but the pdf will be more readable.
 
 ## Classification is a search for an optimal partitioning of the feature space
 Consider data represented in a table with rows and columns: call the rows observations, and the columns features, and let there be one distinguished feature which we call the label of each observation. 
 
 We want to train a model to predict the label of observations where such a label is not yet known: **this type of model is known as a classifier**.
 
-Any classifier can be seen as a **partitioning** of the feature space, where each block / class1 in the partition contains (ideally) observations with only one label, or typically, as few as possible distinct labels (Gini impurity is low).
+Any classifier can be seen as a **partitioning** of the feature space, where each block / class<sup>1</sup> in the partition contains (ideally) observations with only one label, or typically, as few as possible distinct labels (Gini impurity is low).
 
 There are many techniques to construct the partitioning of the feature space: either in a “single step” such as SVM, decision tree, logistic regression, or ensemble and iterative methods that refine the partitioning such as gradient boosting machines, random forest, etc.
 
 **Here I propose another alternative: generate a population of random partitions and use a genetic algorithm to find a partition that will best classify the observations.**
+
+<sub><sup>1. A partition induces an equivalence relation where the blocks of the partition correspond to distinct classes in the equivalence relation.</sup></sub>
 
 ## How can we represent partitions?
 In this project partitions are represented as 
