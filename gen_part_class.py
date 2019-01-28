@@ -8,18 +8,22 @@ Created on Fri Oct 26 06:21:53 2018
 this file contains the class definition for core partition predictor object
 """
 import pandas as pd
-import partition_evaluator as part_eval
+from partition_evaluator import PartitionEvaluator
 from sklearn.metrics import roc_auc_score, accuracy_score
 import numpy as np
 
-# class defining one partition classifier object
-class partition_classifier():
+class PartitionClassifier:
     def __init__(self, df_partition = None, part_norm=1):
-        # partition dataframe is a collection of cell centroids
+        '''
+        Partition Classifier object
+        :param df_partition: DataFrame: a collection of cell centroids
+        :param part_norm:
+        '''
         if df_partition is not None:
             self.part = df_partition.astype('float')
         # which (distance) norm is used to define cell boundaries
         self.part_norm = part_norm
+        self.part_eval = PartitionEvaluator()
                
     # fit data to the partition and evaluate fitness
     def colonize(self, X_train, y_train):
@@ -28,12 +32,12 @@ class partition_classifier():
         
         # Series object containing lists of training data indices,
         # indicating which rows of training data are contained in each cell
-        self.vectors_in_cubes = part_eval.get_containers(self.X_train, self.part, self.part_norm)
+        self.vectors_in_cubes = self.part_eval.get_containers(self.X_train, self.part, self.part_norm)
         # fraction of positive labels in each cell -  
         # assigns a probability score to each cell
-        self.probs_in_cube = part_eval.cube_prob(self.vectors_in_cubes, self.y_train)
+        self.probs_in_cube = self.part_eval.cube_prob(self.vectors_in_cubes, self.y_train)
         # calculate the information gain for partition
-        self.info_gain = part_eval.info_gain(self.vectors_in_cubes, self.y_train)
+        self.info_gain = self.part_eval.info_gain(self.vectors_in_cubes, self.y_train)
 #        print('\ninformation gain:',self.info_gain)
         
     def evaluate(self, X_test, y_test):
@@ -63,7 +67,7 @@ class partition_classifier():
                 del new_vic[centroid]
                 df_row_cube = {}
                 for row in df_row_list:
-                    df_row_cube[row] = part_eval.get_container(self.X_train.loc[row,:], self.part, self.part_norm)
+                    df_row_cube[row] = self.part_eval.get_container(self.X_train.loc[row,:], self.part, self.part_norm)
                 df_row_cube = pd.Series(df_row_cube)
                 df_row_cube = pd.DataFrame(df_row_cube, columns=['cube'])
                 df_row_cube['row'] = df_row_cube.index
@@ -74,7 +78,7 @@ class partition_classifier():
     
     def predict(self, X_test):
         # assign each data point to a cell
-        df_vic = part_eval.get_containers(X_test, self.part, self.part_norm)
+        df_vic = self.part_eval.get_containers(X_test, self.part, self.part_norm)
         df_predict = pd.Series(index = X_test.index)
         for ind, row_list in df_vic.iteritems():
             for row in row_list:
