@@ -6,6 +6,10 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
+matplotlib = "==3.0.2"
+numpy = "==1.15.4"
+pandas = "==0.23.4"
+scikit_learn = "==0.20.2"
 
 [requires]
 python_version = "3.6"

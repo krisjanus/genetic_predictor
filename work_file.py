@@ -8,21 +8,18 @@ Created on Wed Sep 26 06:23:15 2018
     2. general note: limit min and max cubes to lower number - also to avoid overfitting
 """
 
-import os
-#linux 
-dir_name = '/home/krisjan/genetic_predictor'
-#mac 
-#dir_name = '/Users/krisjan/repos/genetic_predictor'
-os.chdir(dir_name)
-#%%
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-import genetic_partition as gen_part
+from genetic_partition import GeneticPartition
+from gen_part_class import PartitionClassifier
+from genetic_mutator import GeneticMutator
+from partition_evaluator import PartitionEvaluator
+import pbar
 import matplotlib.pyplot as plt
-import gen_part_class as gpt
 from math import floor
 import tic_toc
+
 #%% titanic
 df = pd.read_csv('data/titanic_prepd.csv')
 df = df.set_index('PassengerId')
@@ -46,6 +43,7 @@ tic_toc.tic()
 size = len(X_train)
 # titanic does well with norm 1
 # if validation is an integer cross validation is performed and perc_cluster is set to 0
+gen_part = GeneticPartition()
 best_part = gen_part.train(df.drop(['Survived'],axis=1), df['Survived'], 500, 15, prob_mutate = .05, 
                            mutate_strength = .3, survival_rate = .1, alien_rate = .1, min_cubes = 20,
                            min_rows_in_cube = 20, metric='acc', validation=5, 
@@ -86,18 +84,20 @@ plt.show()
 best_part.colonize(df.drop(['Survived'],axis=1),df['Survived'])
 best_part.save('data/titanic_181206_2.h5')
 
-estimator = gpt.partition_classifier()
+estimator = PartitionClassifier()
 estimator.load(filename = 'data/titanic_181129.h5')
 df_prediction = estimator.predict(X_test)
 # or
 estimator = best_part
 #%% Testing parts of modules
-import genetic_mutator as gen_mut
-import partition_evaluator as part_eval
-import pbar
+
 #%%
 # generate a population of partitions
-pop = gen_part.gen_pop(X_train, 100)
+
+part_eval = PartitionEvaluator()
+gen_mut = GeneticMutator()
+
+pop = gen_mut.gen_pop(X_train, 100)
 # evaluate each individual and return an information gain score
 df_scores = part_eval.get_gain_scores(pop, X_train, y_train)
 #%% testing mutation functionality
