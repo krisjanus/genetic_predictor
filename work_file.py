@@ -10,7 +10,7 @@ Created on Wed Sep 26 06:23:15 2018
 
 import os
 #linux 
-dir_name = '/home/krisjan/genetic_predictor'
+dir_name = '/home/krisjan/repos/genetic_predictor'
 #mac 
 #dir_name = '/Users/krisjan/repos/genetic_predictor'
 os.chdir(dir_name)
@@ -49,7 +49,7 @@ size = len(X_train)
 best_part = gen_part.train(df.drop(['Survived'],axis=1), df['Survived'], 500, 15, prob_mutate = .05, 
                            mutate_strength = .3, survival_rate = .1, alien_rate = .1, min_cubes = 20,
                            min_rows_in_cube = 20, metric='acc', validation=5, 
-                           seed=None, part_norm=1, perc_cluster=.2, jobs=8)
+                           seed=None, part_norm=.66, perc_cluster=.2, jobs=8)
 tic_toc.toc()
 #%% evaluate best predictor
 from sklearn.metrics import roc_curve, accuracy_score
@@ -84,7 +84,7 @@ plt.show()
 # probabilities per cell. is working with acc you then just need to also find the
 # threshold associated with best acc
 best_part.colonize(df.drop(['Survived'],axis=1),df['Survived'])
-best_part.save('data/titanic_181206_2.h5')
+best_part.save('data/titanic_190329.h5')
 
 estimator = gpt.partition_classifier()
 estimator.load(filename = 'data/titanic_181129.h5')
@@ -146,7 +146,8 @@ df_test = pd.read_csv('data/titanic_test_prepd.csv')
 df_test = df_test.set_index('PassengerId')
 df_test.drop(['ticket_numbers'],axis=1,inplace=True)
 df_probs = estimator.predict(df_test)
-df_out = (df_probs > .6).astype(int)
+df_out = (df_probs > .36).astype(int)
+df['Survived'].sum()/len(df)
 df_out.sum()/len(df_out)
 df_out = pd.DataFrame(df_out, columns=['Survived'])
-df_out.to_csv('data/titanic_prediction_181206_2_c.csv')
+df_out.to_csv('data/titanic_prediction_190329.csv')
